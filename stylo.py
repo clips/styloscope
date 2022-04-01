@@ -133,7 +133,7 @@ def main(args):
         pass
 
     #author similarity
-    if args.authorship_comparison:
+    if args.author_comparison:
         pass
 
     #register
