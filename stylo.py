@@ -25,7 +25,11 @@ def main(args):
         os.mkdir(output_dir)
 
     #preprocessing
-    nlp = stanza.Pipeline(lang='nl', processors='tokenize,mwt,pos')
+    try:
+        nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos')
+    except: #find prettier way of checking whether Dutch Stanza has been downloaded already
+        stanza.download('nl')
+        nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos')
     doc = nlp(text)
 
     parsed_sentences = [[(w.text, w.upos) for w in s.words] for s in doc.sentences]
