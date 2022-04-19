@@ -27,7 +27,7 @@ def main(args):
     #preprocessing
     try:
         nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos')
-    except: #find prettier way of checking whether Dutch Stanza has been downloaded already
+    except: #TO DO: find prettier way of checking whether Dutch Stanza has been downloaded already
         stanza.download('nl')
         nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos')
     doc = nlp(text)
@@ -132,15 +132,15 @@ def main(args):
         with open(f'{output_dir}/pos.json', 'w') as outfile:
             json.dump(pos_distribution, outfile)
 
-    #gender, age, education, personality
+    #TO DO: gender, age, education, personality
     if args.authorship_attributes:
         pass
 
-    #author similarity
+    #TO DO: author similarity
     if args.author_comparison:
         pass
 
-    #register
+    #TO DO: register
     if args.register:
         pass
 
