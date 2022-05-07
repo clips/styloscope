@@ -26,10 +26,10 @@ def main(args):
 
     #preprocessing
     try:
-        nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos')
+        nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos', verbose=0)
     except: #TO DO: find prettier way of checking whether Dutch Stanza has been downloaded already
         stanza.download('nl')
-        nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos')
+        nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos', verbose=0)
     doc = nlp(text)
 
     parsed_sentences = [[(w.text, w.upos) for w in s.words] for s in doc.sentences]
@@ -75,6 +75,30 @@ def main(args):
 
         with open(f'{output_dir}/stats.json', 'w') as outfile:
             json.dump(stats, outfile)
+    
+    #distributions
+    word_length_distribution = util.get_word_length_distribution(tokens)
+    grapheme_distribution = util.get_grapheme_distribution(tokens)
+    word_internal_grapheme_profile = util.get_word_internal_grapheme_profile(tokens)
+    token_distribution = util.get_token_distribution(tokens)
+    grapheme_positional_freq = util.get_grapheme_positional_freq(tokens)
+    punct_dist = util.get_punct_dist(text)
+    bigram_profile = util.get_bigram_profile(tokens)
+    positional_word_profile = util.get_positional_word_profile(doc)
+    
+    dist = {
+        'Word length distribution': word_length_distribution,
+        'Unigram distribution': token_distribution,
+        'Bigram distribition': bigram_profile,
+        'Punctuation distribution': punct_dist,
+        'Positional word profile': positional_word_profile,
+        'Grapheme distribution': grapheme_distribution,
+        'Word-internal grapheme profile': word_internal_grapheme_profile,
+        'Grapheme positional distribution': grapheme_positional_freq
+    }
+
+    with open(f'{output_dir}/distributions.json', 'w') as outfile:
+            json.dump(dist, outfile)
 
     #lexical richness
     if args.lexical_richness:
