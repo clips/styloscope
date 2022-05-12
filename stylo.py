@@ -215,7 +215,6 @@ def main(args):
         if type(infiles[0]) != str:
             columns_to_cast_to_integers.append('file_id')
         feature_df = feature_df.astype({k: 'int' for k in columns_to_cast_to_integers})
-        feature_df.to_csv('feature_df.csv', index=False)
     
     columns_to_cast_to_integers = [c for c in df_out.columns if c[:2]=='n_']
     if type(infiles[0]) != str:
