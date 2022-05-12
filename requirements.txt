@@ -1,3 +1,6 @@
 pandas
 stanza
 transformers
+numpy
+plotly
+sklearn
