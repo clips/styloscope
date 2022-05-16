@@ -224,7 +224,6 @@ def main(args):
 
     if args.pca == 'y' and len(df_out)>1:
         feature_df.fillna(0, inplace=True)
-        feature_df.to_csv('feature_df.csv', index=False)
     
     columns_to_cast_to_integers = [c for c in df_out.columns if c[:2]=='n_']
     if type(infiles[0]) != str:

@@ -3,4 +3,4 @@ stanza
 transformers
 numpy
 plotly
-sklearn
+scikit-learn
