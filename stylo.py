@@ -62,6 +62,7 @@ def main(args):
     for infile, text in tqdm(zip(infiles, texts)):
         doc = nlp(text)
         parsed_sentences = [[(w.text, w.upos) for w in s.words] for s in doc.sentences]
+        pos_tags = [w.upos for s in doc.sentences for w in s.words]
         tokenized_sentences = [[t for t, pos in s if pos not in {'PUNCT', 'SYM', 'X'}] for s in parsed_sentences]
         tokens = [t for s in parsed_sentences for t, pos in s if pos not in {'PUNCT', 'SYM', 'X'}]
         types = set([t.lower() for t in tokens])
@@ -158,14 +159,22 @@ def main(args):
         if args.distributions == 'y':
             punct_dist = util.get_punct_dist(text)
             function_word_distribution = util.get_function_word_distribution(doc)
-            pos_distribution = util.get_pos_distribution(parsed_sentences)
-            pos_bigram_distribution = util.get_pos_distribution(parsed_sentences, ngram_range=2)
+            pos_profile = util.get_ngram_profile(pos_tags, ngram_range=eval(args.pos_ngram_range))
+            grapheme_distribution = util.get_grapheme_distribution(tokens)
+            word_internal_grapheme_profile = util.get_word_internal_grapheme_profile(tokens)
+            grapheme_positional_frequency = util.get_grapheme_positional_freq(tokens)
+            ngram_profile = util.get_ngram_profile(tokens, ngram_range=eval(args.token_ngram_range))
+            positional_word_profile = util.get_positional_word_profile(doc)
             
             dist = {
                 'punctuation_distribution': punct_dist,
                 'function_word_distribution': function_word_distribution,
-                'pos_distribution': pos_distribution,
-                'pos_bigram_distribution': pos_bigram_distribution
+                'pos_profile': pos_profile,
+                'grapheme_distribution': grapheme_distribution,
+                'word_internal_grapheme_profile': word_internal_grapheme_profile,
+                'grapheme_positional_frequency': grapheme_positional_frequency,
+                'ngram_profile': ngram_profile,
+                'positional_word_profile': positional_word_profile
             }
 
 #WRITE RESULTS TO OUTPUT_______________________________________________________________________
@@ -206,15 +215,15 @@ def main(args):
             if args.distributions == 'y':
                 for _, d in dist.items():
                     for k, v in d.items():
-                        feature_row[str(k)] = str(v)
+                        if type(v) != dict:
+                            feature_row[str(k)] = str(v)
+                        else: # if dictionary within dictionary
+                            for key, value in v.items():
+                                feature_row[key] = value
             feature_df = feature_df.append(feature_row, ignore_index=True)
 
     if args.pca == 'y' and len(df_out)>1:
         feature_df.fillna(0, inplace=True)
-        columns_to_cast_to_integers = [c for c in feature_df.columns if c[:2]=='n_']
-        if type(infiles[0]) != str:
-            columns_to_cast_to_integers.append('file_id')
-        feature_df = feature_df.astype({k: 'int' for k in columns_to_cast_to_integers})
         feature_df.to_csv('feature_df.csv', index=False)
     
     columns_to_cast_to_integers = [c for c in df_out.columns if c[:2]=='n_']
@@ -225,7 +234,7 @@ def main(args):
 
 #PCA___________________________________________________________________________________________
     if args.pca == 'y' and len(df_out)>2:
-        feature_columns = [c for c in feature_df.columns if c[:2]!= 'n_' and c!='file_id']
+        feature_columns = [c for c in feature_df.columns if  c != 'file_id']
         X = feature_df[feature_columns]
         pca = PCA(n_components=2)
         components = pca.fit_transform(X)
@@ -242,6 +251,8 @@ if __name__ == "__main__":
     parser.add_argument('--overwrite_output_dir', default='t', type=str, choices=['y', 'n'], help='overwrite output file (y/n)')
     parser.add_argument('--statistics', default='y', type=str, choices=['y', 'n'], help="compute length features (y/n)")
     parser.add_argument('--distributions', default='y', type=str, choices=['y', 'n'], help="compute (PoS, punctuation, function word) distributions (y/n)")
+    parser.add_argument('--token_ngram_range', default='(1,1)', type=str, help="ngram range for token distribution")
+    parser.add_argument('--pos_ngram_range', default='(1,1)', type=str, help="ngram range for PoS distribution")
     parser.add_argument('--lexical_richness', default='y', type=str, choices=['y', 'n'], help='compute lexical richness scores (y/n)')
     parser.add_argument('--readability', default='y', type=str, choices=['y', 'n'], help='compute readability scores (y/n)')
     parser.add_argument('--pca', default='y', type=str, choices=['y', 'n'], help='perform PCA (y/n)')

@@ -3,6 +3,8 @@ from collections import Counter
 from statistics import mean
 from string import punctuation
 import operator
+from sklearn.feature_extraction.text import CountVectorizer
+import pandas as pd
 
 #BASELINE_SYLLABIFIER________________________________________________________________
 def get_n_syllables(word):
@@ -84,6 +86,7 @@ def get_word_length_distribution(tokens):
 	lengths = [len(t) for t in tokens]
 	dist = dict(Counter(lengths))
 	dist = {k:round(v/len(tokens), 5) for k,v in dist.items()}
+	dist = {str(k)+'_character_tokens':v for k,v in dist.items()}
 	dist = dict(sorted(dist.items(), key=operator.itemgetter(1),reverse=True))
 	return dist
 
@@ -107,9 +110,9 @@ def get_word_internal_grapheme_profile(tokens):
 		for t in tokens:
 			if g in t:
 				if g in profile.keys():
-					profile[g] += 1
+					profile[g+'_word_internal'] += 1
 				else:
-					profile[g] = 1
+					profile[g+'_word_internal'] = 1
 	
 	profile = {k:round(v/n_tokens, 5) for k,v in profile.items()}
 	profile = dict(sorted(profile.items(), key=operator.itemgetter(1),reverse=True))
@@ -122,6 +125,7 @@ def get_function_word_distribution(doc):
 	n_function_words = len(function_words)
 	dist = dict(Counter(function_words))
 	dist = {k:round(v/n_function_words, 5) for k,v in dist.items()}
+	dist = {'function_word_'+k:v for k,v in dist.items()}
 	dist = dict(sorted(dist.items(), key=operator.itemgetter(1),reverse=True))
 	return dist
 
@@ -142,8 +146,9 @@ def get_grapheme_positional_freq(tokens):
 					grapheme_freq[t[i-1]] = 1
 
 		grapheme_freq = {k:round(v/n_tokens, 5) for k,v in grapheme_freq.items()}
+		grapheme_freq = {f'char_idx_{i}_{k}':v for k,v in grapheme_freq.items()}
 		grapheme_freq = dict(sorted(grapheme_freq.items(), key=operator.itemgetter(1),reverse=True))
-		profile[i] = grapheme_freq
+		profile['char_idx_'+str(i)] = grapheme_freq
 
 	return profile
 
@@ -160,27 +165,28 @@ def get_punct_dist(text):
 	return dist_by_char
 
 def get_positional_word_profile(doc):
-	"""returns counter of PoS tags that occur at the start of each sentence"""
-	tokens = [w.upos for s in doc.sentences for i,w in enumerate(s.words) if i==0]
-	profile = dict(Counter(tokens))
+	"""returns {token_idx_in_sent: {word: rel_freq}}"""
+	tokens = [[w.text.lower() for w in s.words] for s in doc.sentences]
+	n_positions = max([len(s) for s in tokens])
+	profile = {}
+
+	for i in range(n_positions):
+		k = i
+		words = [s[k] for s in tokens if len(s)>k]
+		n_sentences = len(words)
+		v = dict(Counter(words))
+		v = {k:v/n_sentences for k,v in v.items()}
+		v = {f'token_idx_{str(i)}_{k}':v for k,v in v.items()}
+		v = dict(sorted(v.items(), key=operator.itemgetter(1),reverse=True))
+		profile['token_idx_'+str(k)] = v
+
 	return profile
 
-def get_bigram_profile(tokens):
-	"""returns {'bi, gram': n_occurrences)"""
-	bigrams = [(tokens[i].lower(), tokens[i+1].lower()) for i in range(0, len(tokens)-1)]
-	profile = {', '.join(bigram) : bigrams.count(bigram) for bigram in bigrams}
-	profile = dict(sorted(profile.items(), key=operator.itemgetter(1),reverse=True))
+def get_ngram_profile(tokens, ngram_range):
+	tokens = [t.lower() for t in tokens]
+	vec = CountVectorizer(ngram_range=ngram_range, analyzer=lambda x:x)
+	X = vec.fit_transform(tokens)
+	profile = dict()
+	for v,k in zip(X.toarray().flatten(), vec.get_feature_names_out()):
+		profile[k] = v
 	return profile
-
-def get_pos_distribution(parsed_sentences, ngram_range=1):
-	"""returns {pos_ngram: rel_freq}"""
-	assert ngram_range > 0
-	if ngram_range==1:
-		pos_tag_ngrams = [pos for s in parsed_sentences for t, pos in s]
-	else:
-		tags = [pos for s in parsed_sentences for t, pos in s]
-		pos_tag_ngrams = [tags[i]+','+tags[i+1] for i in range(0, len(tags)-1)]
-	n_total = len(pos_tag_ngrams)
-	pos_distribution = dict(Counter(pos_tag_ngrams))
-	pos_distribution = {k:round(v/n_total, 5) for k,v in pos_distribution.items()}
-	return pos_distribution
