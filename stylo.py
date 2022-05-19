@@ -244,10 +244,10 @@ def main(args):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', default=None, type=str, help='director to input file or path (it is recommended to use this pipeline on texts > 100 tokens)')
+    parser.add_argument('--input', default=None, type=str, help='directory to input file or path (it is recommended to use this pipeline on texts > 100 tokens)')
     parser.add_argument('--input_format', default=None, type=str, choices=['csv', 'xlsx', 'txt', 'folder_with_txt'], help='type of input data')
     parser.add_argument('--output', default='output.csv', type=str, help='path to output, default=output.csv')
-    parser.add_argument('--overwrite_output_dir', default='t', type=str, choices=['y', 'n'], help='overwrite output file (y/n)')
+    parser.add_argument('--overwrite_output_dir', default='y', type=str, choices=['y', 'n'], help='overwrite output file (y/n)')
     parser.add_argument('--statistics', default='y', type=str, choices=['y', 'n'], help="compute length features (y/n)")
     parser.add_argument('--distributions', default='y', type=str, choices=['y', 'n'], help="compute (PoS, punctuation, function word) distributions (y/n)")
     parser.add_argument('--token_ngram_range', default='(1,1)', type=str, help="ngram range for token distribution")
