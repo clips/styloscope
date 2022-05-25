@@ -187,6 +187,6 @@ def get_ngram_profile(tokens, ngram_range):
 	vec = CountVectorizer(ngram_range=ngram_range, analyzer=lambda x:x)
 	X = vec.fit_transform(tokens)
 	profile = dict()
-	for v,k in zip(X.toarray().flatten(), vec.get_feature_names_out()):
+	for v,k in zip(X.toarray().flatten(), vec.get_feature_names()):
 		profile[k] = v
 	return profile

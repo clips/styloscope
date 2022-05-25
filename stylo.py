@@ -1,5 +1,5 @@
-import os, argparse
-
+import os
+from configparser import ConfigParser
 from statistics import mean, stdev
 from collections import Counter
 from tqdm import tqdm
@@ -12,41 +12,45 @@ from sklearn.decomposition import PCA
 import plotly.express as px
 #______________________________________________________________________________________________
 
-def main(args):
+def main():
 
 #LOAD DATA_____________________________________________________________________________________
-    input_format = args.input_format
+    config_object = ConfigParser()
+    config_object.read('config.ini')
+    input_config = config_object["INPUT_CONFIG"] 
+    output_config = config_object["OUTPUT_CONFIG"]
+    feature_config = config_object["FEATURE_CONFIG"]
 
-    if input_format == 'txt': # 1 .txt file
-        with open(args.input) as f:
+    if input_config['input_format'] == 'txt':  #txt file
+        with open(input_config['input']) as f:
             lines = f.readlines()
             lines = [l.strip() for l in lines]
         texts = [' '.join(lines)]
-        infiles = [args.input]
+        infiles = input_config['input']
     
-    elif input_format in {'xlsx', 'csv'}: # 1 csv/excel file
-        if args.input[-4:] == '.csv':
-            df = pd.read_csv(args.input)
+    elif input_config['input_format'] in {'xlsx', 'csv'}: # xlsx or csv file
+        if input_config['input'][-4:] == '.csv':
+            df = pd.read_csv(input_config['input'])
         else:
-            df = pd.read_excel(args.input)
-        texts = list(df[args.text_column])
+            df = pd.read_excel(input_config['input'])
+        texts = list(df[input_config['text_column']])
         infiles = list(df.index)
     
-    else: # directory with txt files
+    else: # directory of txt files
         texts = []
-        infiles =  os.listdir(args.input)
+        infiles =  os.listdir(input_config['input'])
         for fn in infiles:
             assert fn[-4:] == '.txt'
 
         for fn in infiles:
-            with open(os.path.join(args.input, fn)) as f:
+            with open(os.path.join(input_config['input'], fn)) as f:
                 lines = f.readlines()
                 lines = [l.strip() for l in lines]
                 text = ' '.join(lines)
                 texts.append(text)
     
-    if args.overwrite_output_dir != 't':
-        assert os.path.exists(output_dir) == False
+    if not output_config['overwrite_output_dir']:
+        assert os.path.exists(output_config['output']) == False
 
     df_out = pd.DataFrame()
     feature_df = pd.DataFrame()
@@ -56,8 +60,7 @@ def main(args):
         nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos', verbose=0)
     except: #TO DO: find prettier way of checking whether Dutch Stanza has been downloaded already
         stanza.download('nl')
-
-    nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos', verbose=0)
+        nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos', verbose=0)
     
     for infile, text in tqdm(zip(infiles, texts)):
         doc = nlp(text)
@@ -111,7 +114,7 @@ def main(args):
         }
 
 #LEXICAL RICHNESS______________________________________________________________________________
-        if args.lexical_richness == 'y':
+        if feature_config['lexical_richness']:
             ttr = util.ttr(n_types, n_tokens)
             rttr = util.rttr(n_types, n_tokens)
             cttr = util.cttr(n_types, n_tokens)
@@ -134,7 +137,7 @@ def main(args):
             }
 
 #READABILITY___________________________________________________________________________________
-        if args.readability == 'y':
+        if feature_config['readability']:
             ARI = util.ARI(n_char, n_tokens, n_sentences)
             CL = util.ColemanLiau(tokens, tokenized_sentences)
             Flesch = util.Flesch(avg_words_per_sent, avg_syl_per_word)
@@ -156,14 +159,14 @@ def main(args):
             }
 
 #DISTRIBUTIONS_________________________________________________________________________________
-        if args.distributions == 'y':
+        if feature_config['distributions']:
             punct_dist = util.get_punct_dist(text)
             function_word_distribution = util.get_function_word_distribution(doc)
-            pos_profile = util.get_ngram_profile(pos_tags, ngram_range=eval(args.pos_ngram_range))
+            pos_profile = util.get_ngram_profile(pos_tags, ngram_range=eval(feature_config['pos_ngram_range']))
             grapheme_distribution = util.get_grapheme_distribution(tokens)
             word_internal_grapheme_profile = util.get_word_internal_grapheme_profile(tokens)
             grapheme_positional_frequency = util.get_grapheme_positional_freq(tokens)
-            ngram_profile = util.get_ngram_profile(tokens, ngram_range=eval(args.token_ngram_range))
+            ngram_profile = util.get_ngram_profile(tokens, ngram_range=eval(feature_config['token_ngram_range']))
             positional_word_profile = util.get_positional_word_profile(doc)
             
             dist = {
@@ -181,38 +184,38 @@ def main(args):
         row = dict()
 
         row['file_id'] = infile
-        if args.statistics == 'y':
+        if feature_config['stats']:
             for k, v in stats.items():
                 row[k] = v
-        if args.lexical_richness == 'y':
+        if feature_config['lexical_richness']:
             for k, v in lr.items():
                 row[k] = v
-        if args.readability == 'y':
+        if feature_config['readability']:
             for k, v in readability.items():
                 row[k] = v
-        if args.distributions == 'y':
+        if feature_config['distributions']:
             for k, v in dist.items():
                 row[k] = str(v)
 
         df_out = df_out.append(row, ignore_index=True)
 
-        if args.pca=='y': # group features slightly differently for pca
+        if feature_config['pca']: # group features slightly differently for pca
             feature_row = dict()
             feature_row['file_id'] = infile
-            if args.statistics == 'y':
+            if feature_config['stats']:
                 for k, v in stats.items():
                     if k == 'word_length_distribution':
                         for length, n in v.items():
                             feature_row[str(length)] = n
                     else:
                         feature_row[k] = v
-            if args.lexical_richness == 'y':
+            if feature_config['lexical_richness']:
                 for k, v in lr.items():
                     feature_row[k] = v
-            if args.readability == 'y':
+            if feature_config['readability']:
                 for k, v in readability.items():
                     feature_row[k] = v
-            if args.distributions == 'y':
+            if feature_config['distributions']:
                 for _, d in dist.items():
                     for k, v in d.items():
                         if type(v) != dict:
@@ -222,17 +225,17 @@ def main(args):
                                 feature_row[key] = value
             feature_df = feature_df.append(feature_row, ignore_index=True)
 
-    if args.pca == 'y' and len(df_out)>1:
+    if feature_config['pca'] and len(df_out)>1:
         feature_df.fillna(0, inplace=True)
     
     columns_to_cast_to_integers = [c for c in df_out.columns if c[:2]=='n_']
     if type(infiles[0]) != str:
         columns_to_cast_to_integers.append('file_id')
     df_out = df_out.astype({k: 'int' for k in columns_to_cast_to_integers})
-    df_out.to_csv(f'{args.output}', index=False)
+    df_out.to_csv(output_config['output_dir'], index=False)
 
 #PCA___________________________________________________________________________________________
-    if args.pca == 'y' and len(df_out)>2:
+    if feature_config['pca'] and len(df_out)>2:
         feature_columns = [c for c in feature_df.columns if  c != 'file_id']
         X = feature_df[feature_columns]
         pca = PCA(n_components=2)
@@ -242,19 +245,4 @@ def main(args):
 
 #______________________________________________________________________________________________
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input', default=None, type=str, help='directory to input file or path (it is recommended to use this pipeline on texts > 100 tokens)')
-    parser.add_argument('--input_format', default=None, type=str, choices=['csv', 'xlsx', 'txt', 'folder_with_txt'], help='type of input data')
-    parser.add_argument('--output', default='output.csv', type=str, help='path to output, default=output.csv')
-    parser.add_argument('--overwrite_output_dir', default='y', type=str, choices=['y', 'n'], help='overwrite output file (y/n)')
-    parser.add_argument('--statistics', default='y', type=str, choices=['y', 'n'], help="compute length features (y/n)")
-    parser.add_argument('--distributions', default='y', type=str, choices=['y', 'n'], help="compute (PoS, punctuation, function word) distributions (y/n)")
-    parser.add_argument('--token_ngram_range', default='(1,1)', type=str, help="ngram range for token distribution")
-    parser.add_argument('--pos_ngram_range', default='(1,1)', type=str, help="ngram range for PoS distribution")
-    parser.add_argument('--lexical_richness', default='y', type=str, choices=['y', 'n'], help='compute lexical richness scores (y/n)')
-    parser.add_argument('--readability', default='y', type=str, choices=['y', 'n'], help='compute readability scores (y/n)')
-    parser.add_argument('--pca', default='y', type=str, choices=['y', 'n'], help='perform PCA (y/n)')
-    parser.add_argument('--text_column', default='text', type=str, help='column that contains text input (only relevant if --input_format == "csv" or "xlsx")') 
-    args = parser.parse_args()
-    main(args)
+    main() 
