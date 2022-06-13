@@ -3,13 +3,13 @@ from configparser import ConfigParser
 config_object = ConfigParser()
 
 config_object["FEATURE_CONFIG"] = {
-    "stats": True,
-    "distributions": True,
+    "stats": 1,
+    "distributions": 1,
     "pos_ngram_range": '(1,1)',
     "token_ngram_range": '(1,1)',
-    "readability": True,
-    "lexical_richness": True,
-    "pca": True
+    "readability": 1,
+    "lexical_richness": 1,
+    "pca": 1
 }
 
 config_object["INPUT_CONFIG"] = {

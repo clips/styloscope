@@ -49,7 +49,7 @@ def main():
                 text = ' '.join(lines)
                 texts.append(text)
     
-    if not output_config['overwrite_output_dir']:
+    if not int(output_config['overwrite_output_dir']):
         assert os.path.exists(output_config['output']) == False
 
     df_out = pd.DataFrame()
@@ -114,7 +114,7 @@ def main():
         }
 
 #LEXICAL RICHNESS______________________________________________________________________________
-        if feature_config['lexical_richness']:
+        if int(feature_config['lexical_richness']):
             ttr = util.ttr(n_types, n_tokens)
             rttr = util.rttr(n_types, n_tokens)
             cttr = util.cttr(n_types, n_tokens)
@@ -137,7 +137,7 @@ def main():
             }
 
 #READABILITY___________________________________________________________________________________
-        if feature_config['readability']:
+        if int(feature_config['readability']):
             ARI = util.ARI(n_char, n_tokens, n_sentences)
             CL = util.ColemanLiau(tokens, tokenized_sentences)
             Flesch = util.Flesch(avg_words_per_sent, avg_syl_per_word)
@@ -159,7 +159,7 @@ def main():
             }
 
 #DISTRIBUTIONS_________________________________________________________________________________
-        if feature_config['distributions']:
+        if int(feature_config['distributions']):
             punct_dist = util.get_punct_dist(text)
             function_word_distribution = util.get_function_word_distribution(doc)
             pos_profile = util.get_ngram_profile(pos_tags, ngram_range=eval(feature_config['pos_ngram_range']))
@@ -184,38 +184,38 @@ def main():
         row = dict()
 
         row['file_id'] = infile
-        if feature_config['stats']:
+        if int(feature_config['stats']):
             for k, v in stats.items():
                 row[k] = v
-        if feature_config['lexical_richness']:
+        if int(feature_config['lexical_richness']):
             for k, v in lr.items():
                 row[k] = v
-        if feature_config['readability']:
+        if int(feature_config['readability']):
             for k, v in readability.items():
                 row[k] = v
-        if feature_config['distributions']:
+        if int(feature_config['distributions']):
             for k, v in dist.items():
                 row[k] = str(v)
 
         df_out = df_out.append(row, ignore_index=True)
 
-        if feature_config['pca']: # group features slightly differently for pca
+        if int(feature_config['pca']): # group features slightly differently for pca
             feature_row = dict()
             feature_row['file_id'] = infile
-            if feature_config['stats']:
+            if int(feature_config['stats']):
                 for k, v in stats.items():
                     if k == 'word_length_distribution':
                         for length, n in v.items():
                             feature_row[str(length)] = n
                     else:
                         feature_row[k] = v
-            if feature_config['lexical_richness']:
+            if int(feature_config['lexical_richness']):
                 for k, v in lr.items():
                     feature_row[k] = v
-            if feature_config['readability']:
+            if int(feature_config['readability']):
                 for k, v in readability.items():
                     feature_row[k] = v
-            if feature_config['distributions']:
+            if int(feature_config['distributions']):
                 for _, d in dist.items():
                     for k, v in d.items():
                         if type(v) != dict:
@@ -225,7 +225,7 @@ def main():
                                 feature_row[key] = value
             feature_df = feature_df.append(feature_row, ignore_index=True)
 
-    if feature_config['pca'] and len(df_out)>1:
+    if int(feature_config['pca']) and len(df_out)>1:
         feature_df.fillna(0, inplace=True)
     
     columns_to_cast_to_integers = [c for c in df_out.columns if c[:2]=='n_']
@@ -235,7 +235,7 @@ def main():
     df_out.to_csv(output_config['output_dir'], index=False)
 
 #PCA___________________________________________________________________________________________
-    if feature_config['pca'] and len(df_out)>2:
+    if int(feature_config['pca']) and len(df_out)>2:
         feature_columns = [c for c in feature_df.columns if  c != 'file_id']
         X = feature_df[feature_columns]
         pca = PCA(n_components=2)
