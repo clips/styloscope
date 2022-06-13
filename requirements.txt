@@ -1,6 +1,6 @@
-pandas
-stanza
-transformers
-numpy
-plotly
-scikit-learn
+pandas==1.4.0
+stanza==1.2.3
+transformers==4.16.2
+numpy==1.21.6
+plotly==5.8.0
+scikit-learn==1.0.2
