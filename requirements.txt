@@ -4,3 +4,4 @@ transformers==4.16.2
 numpy==1.21.6
 plotly==5.8.0
 scikit-learn==1.0.2
+kaleido==0.2.1
