@@ -1,10 +1,11 @@
-import os, shutil
+import os, shutil, util
 from configparser import ConfigParser
 from statistics import mean, stdev
 from tqdm import tqdm
 
 import pandas as pd
-import stanza, util
+import spacy
+from spacy.matcher import Matcher
 from sklearn.decomposition import PCA
 
 import plotly.express as px
@@ -65,18 +66,24 @@ def main():
     feature_df = pd.DataFrame()
 
 #PREPROCESSING_________________________________________________________________________________
-    try:
-        nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos,lemma,depparse', verbose=0)
-    except: #TO DO: find prettier way of checking whether Dutch Stanza has been downloaded already
-        stanza.download('nl')
-        nlp = stanza.Pipeline(lang='nl', processors='tokenize,pos,lemma,depparse', verbose=0)
+    nlp = spacy.load("nl_core_news_sm")
+
+    # Create pattern to match passive voice use
+    passive_rules = [
+        [{'DEP': 'nsubj:pass'}, {'DEP': 'aux:pass'}],
+        [{'DEP': 'aux:pass'}],
+        [{'DEP': 'nsubj:pass'}],
+    ]
     
+    matcher = Matcher(nlp.vocab)  # Init. the matcher with a vocab (note matcher vocab must share same vocab with docs)
+    matcher.add('Passive',  passive_rules)  # Add passive rules to matcher
+  
     print("Processing data...")
     for text in tqdm(texts):
         doc = nlp(text)
-        parsed_sentences = [[(w.text, w.upos) for w in s.words] for s in doc.sentences]
-        pos_tags = [w.upos for s in doc.sentences for w in s.words]
-        dependencies = [w.deprel for s in doc.sentences for w in s.words if w.deprel]
+        parsed_sentences = [[(w.text, w.pos_) for w in s] for s in doc.sents]
+        pos_tags = [w.pos_ for s in doc.sents for w in s]
+        dependencies = [w.dep_ for s in doc.sents for w in s if w.dep_]
         tokenized_sentences = [[t for t, pos in s if pos not in {'PUNCT', 'SYM', 'X'}] for s in parsed_sentences]
         tokens = [t for s in parsed_sentences for t, pos in s if pos not in {'PUNCT', 'SYM', 'X'}]
         types = set([t.lower() for t in tokens])
@@ -89,7 +96,7 @@ def main():
         n_tokens = len(tokens)
         n_longer_than_6_char = len([t for t in tokens if len(t) < 6])
         n_types = len(types)
-        n_sentences = len(doc.sentences)
+        n_sentences = len(list(doc.sents))
 
         avg_char_per_word = round(mean([len(t) for t in tokens]), 3)
         std_char_per_word = round(stdev([len(t) for t in tokens]), 3)
@@ -103,6 +110,10 @@ def main():
         else:
             std_words_per_sent = 0
         ratio_long_words = round(n_longer_than_6_char/n_tokens, 3)
+    
+        ratio_sentences_negation = round(mean([util.contains_negation(s) for s in tokenized_sentences]), 3)
+        ratio_content_words = round(util.ratio_content_words(doc), 3)
+        ratio_passive_sentences = util.get_passive_ratio(doc, matcher)
 
         stats = {
         'n_characters': [n_char],
@@ -117,6 +128,9 @@ def main():
         'avg_syllables_per_word': [avg_syl_per_word],
         'std_syllables_per_word': [std_syl_per_word],
         'ratio_long_words': [ratio_long_words],
+        'ratio_content_words': [ratio_content_words],
+        'ratio_passive_sentences': [ratio_passive_sentences],
+        'ratio_sentences_negation': [ratio_sentences_negation],
         'avg_words_per_sentence': [avg_words_per_sent],
         'std_words_per_sentence': [std_words_per_sent],
         }
@@ -217,11 +231,12 @@ def main():
     lexical_richness_df.to_csv(os.path.join(dir_out, 'lexical_richness_statistics.csv'), index=False)
 
     for k in dist.keys():
-        df = pd.concat(distribution_dfs[k], axis=0).fillna('nan')
-        if k == 'word_length_distribution':
-            df = df.sort_index(axis=1)
-        df.insert(0, 'doc', infiles)
-        df.to_csv(os.path.join(dir_out, f'{k}.csv'), index=False)
+        if k != 'ngram_profile':
+            df = pd.concat(distribution_dfs[k], axis=0).fillna('nan')
+            if k == 'word_length_distribution':
+                df = df.sort_index(axis=1)
+            df.insert(0, 'doc', infiles)
+            df.to_csv(os.path.join(dir_out, f'{k}.csv'), index=False)
 #         if int(feature_config['pca']): # group features slightly differently for pca
 #             feature_row = dict()
 #             feature_row['file_id'] = infile

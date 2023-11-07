@@ -5,7 +5,6 @@ from string import punctuation
 import operator, zipfile, os
 from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
-import numpy as np
 
 def load_data(input_format, input_dir, text_column=None, delimiter=None):
 
@@ -62,6 +61,31 @@ def get_n_syllables(word):
 		if char in vowels and previous_char not in vowels:
 			cnt+=1
 	return cnt
+
+
+#STATISTICS__________________________________________________________________________
+def contains_negation(tokenized_sentence, negators={'niet', 'niets', 'geen', 'nooit', 'niemand', 'nergens', 'noch'}):
+    for n in negators:
+        if n in set(t.lower() for t in tokenized_sentence):
+            return True
+    return False
+
+def ratio_content_words(doc):
+    content = [t.text for s in doc.sents for t in s if t.pos_ in {'ADJ', 'ADV', 'NOUN', 'VERB', 'PROPN'}]
+    funct = [t.text for s in doc.sents for t in s if t.pos_ not in {'ADP', 'AUX', 'CCONJ', 'DET', 'NUM', 'PART', 'PRON', 'SCONJ'}]
+    return len(content)/(len(content)+len(funct))
+
+def get_passive_ratio(doc, matcher):
+
+	total = 0
+	passive = 0
+
+	for s in doc.sents:
+		total += 1
+		matches = matcher(s)
+		if matches:
+			passive += 1
+	return round(passive/total, 3)
 
 #LEXICAL_RICHNESS_SCORES_____________________________________________________________
 """
@@ -212,7 +236,7 @@ def get_function_word_distribution(doc):
 		{function word: rel_freq}
 	"""
 	allowed_pos = {'ADP', 'AUX', 'CCONJ', 'DET', 'PART', 'PRON', 'SCONJ'}
-	function_words = [w.text.lower() for s in doc.sentences for w in s.words if w.upos in allowed_pos]
+	function_words = [w.text.lower() for s in doc.sents for w in s if w.pos_ in allowed_pos]
 	n_function_words = len(function_words)
 	dist = dict(Counter(function_words))
 	dist = {k:round(v/n_function_words, 3) for k,v in dist.items()}
@@ -275,7 +299,7 @@ def get_positional_word_profile(doc):
 	Returns:
 		{token idx in sentence: {word: relative freq}}
 	"""
-	tokens = [[w.text.lower() for w in s.words] for s in doc.sentences]
+	tokens = [[w.text.lower() for w in s] for s in doc.sents]
 	n_positions = max([len(s) for s in tokens])
 	profile = {}
 
