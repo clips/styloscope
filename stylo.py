@@ -1,17 +1,18 @@
-import os, shutil, util
+import os, shutil
+import util, visualizations, warnings
 from configparser import ConfigParser
 from statistics import mean, stdev
 from tqdm import tqdm
 
 import pandas as pd
 import spacy
+import numpy as np
 from spacy.matcher import Matcher
-from sklearn.decomposition import PCA
-
-import plotly.express as px
 #______________________________________________________________________________________________
 
 def main():
+    
+    warnings.simplefilter(action='ignore', category=FutureWarning)
 
 #LOAD CONFIG____________________________________________________________________________________
     config_object = ConfigParser()
@@ -21,7 +22,7 @@ def main():
     feature_config = config_object["FEATURE_CONFIG"]
     dir_out = output_config['output_dir']
 
-#LOAD DATA_____________________________________________________________________________________
+#LOAD_DATA_____________________________________________________________________________________
     print("Loading data...")
     text_column = input_config['text_column'] if input_config['input_format'] == 'csv' else None
     delimiter = input_config['delimiter'] if input_config['input_format'] == 'csv' else None
@@ -46,6 +47,7 @@ def main():
         assert os.path.exists(dir_out) == False
 
     os.mkdir(dir_out)
+    os.mkdir(os.path.join(dir_out, 'visualizations'))
 
     length_dfs = []
     lexical_richness_dfs = []
@@ -55,15 +57,12 @@ def main():
         'function_word_distribution': [],
         'pos_profile': [],
         'dependency_profile': [],
-        # 'grapheme_distribution': [],
-        # 'word_internal_grapheme_profile': [],
-        # 'grapheme_positional_frequency': [],
-        'ngram_profile': [],
-        # 'positional_word_profile': [],
+        #'ngram_profile': [],
         'word_length_distribution': [],
     }
 
-    feature_df = pd.DataFrame()
+    pos_outputs = []
+    dependency_outputs = []
 
 #PREPROCESSING_________________________________________________________________________________
     nlp = spacy.load("nl_core_news_sm")
@@ -80,6 +79,18 @@ def main():
   
     print("Processing data...")
     for text in tqdm(texts):
+
+        # check if text is empty
+        if not text.strip():
+            dummy_df = pd.DataFrame(data={'__Dummy__': ['dummy']}) # add dummy data to output, which will be removed at the end
+            length_dfs.append(dummy_df)
+            lexical_richness_dfs.append(dummy_df)
+            readability_dfs.append(dummy_df)
+            for k in distribution_dfs.keys():
+                distribution_dfs[k].append(dummy_df)
+            continue
+
+        # tokenization, parsing, etc.
         doc = nlp(text)
         parsed_sentences = [[(w.text, w.pos_) for w in s] for s in doc.sents]
         pos_tags = [w.pos_ for s in doc.sents for w in s]
@@ -89,30 +100,33 @@ def main():
         types = set([t.lower() for t in tokens])
         syllables = [[util.get_n_syllables(t) for t, pos in s if pos not in {'PUNCT', 'SYM', 'X'}] for s in parsed_sentences]
 
+        # store parsing results
+        pos_outputs.append(' '.join(pos_tags))
+        dependency_outputs.append(' '.join(dependencies))
+
 #LENGTH STATISTICS_____________________________________________________________________________
+
+        # check if text is empty (or contains only punctuation/symbols/other) -> skip
+        n_tokens = len(tokens)
         n_char = len(text.replace(' ', ''))
         n_syllables = sum([syl for sent in syllables for syl in sent])
         n_polysyllabic = len([i for sent in syllables for i in sent if i > 1])
-        n_tokens = len(tokens)
         n_longer_than_6_char = len([t for t in tokens if len(t) < 6])
         n_types = len(types)
         n_sentences = len(list(doc.sents))
 
-        avg_char_per_word = round(mean([len(t) for t in tokens]), 3)
-        std_char_per_word = round(stdev([len(t) for t in tokens]), 3)
+        avg_char_per_word = mean([len(t) for t in tokens]) if n_tokens > 0 else 0
+        std_char_per_word = stdev([len(t) for t in tokens]) if n_tokens > 1 else 0
 
-        avg_syl_per_word = round(mean([s for sent in syllables for s in sent]), 3)
-        std_syl_per_word = round(stdev([s for sent in syllables for s in sent]), 3)
+        avg_syl_per_word = mean([s for sent in syllables for s in sent]) if n_tokens > 0  else 0
+        std_syl_per_word = stdev([s for sent in syllables for s in sent]) if n_tokens > 1 else 0
 
-        avg_words_per_sent = round(mean([len(s) for s in tokenized_sentences]), 3)
-        if n_sentences > 1:
-            std_words_per_sent = round(stdev([len(s) for s in tokenized_sentences]), 3)
-        else:
-            std_words_per_sent = 0
-        ratio_long_words = round(n_longer_than_6_char/n_tokens, 3)
-    
-        ratio_sentences_negation = round(mean([util.contains_negation(s) for s in tokenized_sentences]), 3)
-        ratio_content_words = round(util.ratio_content_words(doc), 3)
+        avg_words_per_sent = mean([len(s) for s in tokenized_sentences])
+        std_words_per_sent = stdev([len(s) for s in tokenized_sentences]) if n_sentences > 1 else 0
+
+        ratio_long_words = 0 if n_tokens == 0 else n_longer_than_6_char/n_tokens
+        ratio_sentences_negation = mean([util.contains_negation(s) for s in tokenized_sentences])
+        ratio_content_words = util.ratio_content_words(doc)
         ratio_passive_sentences = util.get_passive_ratio(doc, matcher)
 
         stats = {
@@ -140,18 +154,20 @@ def main():
 
 
 #LEXICAL RICHNESS______________________________________________________________________________
-        ttr = util.ttr(n_types, n_tokens)
-        rttr = util.rttr(n_types, n_tokens)
-        cttr = util.cttr(n_types, n_tokens)
-        Herdan = util.Herdan(n_types, n_tokens)
-        Summer = util.Summer(n_types, n_tokens)
-        Dugast = 0 if n_types==n_tokens else util.Dugast(n_types, n_tokens)
-        Maas = util.Maas(n_types, n_tokens)
+        ttr = util.ttr(n_types, n_tokens) if n_tokens != 0 else None
+        rttr = util.rttr(n_types, n_tokens) if n_tokens != 0 else None
+        cttr = util.cttr(n_types, n_tokens) if n_tokens != 0 else None
+        sttr = util.sttr(tokens) if n_tokens != 0 else None
+        Herdan = util.Herdan(n_types, n_tokens) if n_tokens != 0 else None
+        Summer = util.Summer(n_types, n_tokens) if n_tokens != 0 else None
+        Dugast = util.Dugast(n_types, n_tokens) if n_tokens != 0 else None
+        Maas = util.Maas(n_types, n_tokens) if n_tokens != 0 else None
 
         lr = {
         'TTR': [ttr],
         'RTTR': [rttr],
         'CTTR': [cttr],
+        'STTR': [sttr],
         'Herdan': [Herdan],
         'Summer': [Summer],
         'Dugast': [Dugast],
@@ -161,14 +177,14 @@ def main():
         lexical_richness_dfs.append(pd.DataFrame(data=lr))
 
 #READABILITY___________________________________________________________________________________
-        ARI = util.ARI(n_char, n_tokens, n_sentences)
-        CL = util.ColemanLiau(tokens, tokenized_sentences)
-        Flesch = util.Flesch(avg_words_per_sent, avg_syl_per_word)
-        Fog = util.Fog(avg_words_per_sent, syllables)
-        Kincaid = util.Kincaid(avg_words_per_sent, avg_syl_per_word)
-        LIX = util.LIX(n_tokens, n_sentences, n_longer_than_6_char)
-        RIX = util.RIX(n_longer_than_6_char, n_sentences)
-        SMOG = util.SMOG(syllables)
+        ARI = util.ARI(n_char, n_tokens, n_sentences) if n_tokens != 0 else None
+        CL = util.ColemanLiau(tokens, tokenized_sentences) if n_tokens != 0 else None
+        Flesch = util.Flesch(avg_words_per_sent, avg_syl_per_word) if n_tokens != 0 else None
+        Fog = util.Fog(avg_words_per_sent, syllables) if n_tokens != 0 else None
+        Kincaid = util.Kincaid(avg_words_per_sent, avg_syl_per_word) if n_tokens != 0 else None
+        LIX = util.LIX(n_tokens, n_sentences, n_longer_than_6_char) if n_tokens != 0 else None
+        RIX = util.RIX(n_longer_than_6_char, n_sentences) if n_tokens != 0 else None
+        SMOG = util.SMOG(syllables) if n_tokens != 0 else None
 
         readability = {
         'ARI': [ARI],
@@ -186,13 +202,9 @@ def main():
 #DISTRIBUTIONS_________________________________________________________________________________ 
         punct_dist = util.get_punct_dist(text)
         function_word_distribution = util.get_function_word_distribution(doc)
-        pos_profile = util.get_ngram_profile(pos_tags, eval(feature_config['pos_ngram_range']))
+        pos_profile = util.get_ngram_profile(pos_tags)
         dependency_profile = util.get_dependency_distribution(dependencies)
-        # grapheme_distribution = util.get_grapheme_distribution(tokens)
-        # word_internal_grapheme_profile = util.get_word_internal_grapheme_profile(tokens)
-        # grapheme_positional_frequency = util.get_grapheme_positional_freq(tokens)
-        ngram_profile = util.get_ngram_profile(tokens, eval(feature_config['token_ngram_range']))
-        # positional_word_profile = util.get_positional_word_profile(doc)
+        #ngram_profile = util.get_ngram_profile(tokens, eval(feature_config['token_ngram_range']))
         word_length_distribution = util.get_word_length_distribution(tokens)
         
         dist = {
@@ -200,86 +212,90 @@ def main():
             'function_word_distribution': function_word_distribution,
             'pos_profile': pos_profile,
             'dependency_profile': dependency_profile,
-            # 'grapheme_distribution': grapheme_distribution,
-            # 'word_internal_grapheme_profile': word_internal_grapheme_profile,
-            # 'grapheme_positional_frequency': grapheme_positional_frequency,
-            'ngram_profile': ngram_profile,
-            # 'positional_word_profile': positional_word_profile,
+            #'ngram_profile': ngram_profile,
             'word_length_distribution': word_length_distribution,
         }
 
         for dist_name in dist.keys():
-            if dist_name not in {'positional_word_profile', 'grapheme_positional_frequency'}:
-                df = pd.DataFrame(data=dist[dist_name])
-            else:
-                dfs = [pd.DataFrame(data=dist[dist_name][k]) for k in dist[dist_name].keys()]
-                df = pd.concat(dfs, axis=0, keys=dist[dist_name].keys())
+            df = pd.DataFrame(data=dist[dist_name])
             distribution_dfs[dist_name] = distribution_dfs[dist_name] + [df]
-
+    
 #WRITE RESULTS TO OUTPUT_______________________________________________________________________
-    print("Saving results...")
+    print("Aggregating data and saving results (this may take a few minutes)...")
+    # length statistics
     length_df = pd.concat(length_dfs, axis=0).fillna('nan')
+    length_df = length_df.drop(columns=['__Dummy__']) if '__Dummy__' in length_df.columns else length_df
     length_df.insert(0, 'doc', infiles)
+
+    mean_length_df = length_df.mean().to_frame().T
+    mean_length_df['doc'] = 'mean'
+
+    std_length_df = length_df.std().to_frame().T
+    std_length_df['doc'] = 'std'
+
+    length_df = pd.concat([length_df, mean_length_df, std_length_df])
+    length_df = length_df.round(3)
     length_df.to_csv(os.path.join(dir_out, 'length_statistics.csv'), index=False)
 
+    # readability statistics
     readability_df = pd.concat(readability_dfs, axis=0).fillna('nan')
+    readability_df = readability_df.drop(columns=['__Dummy__']) if '__Dummy__' in readability_df.columns else readability_df
     readability_df.insert(0, 'doc', infiles)
+
+    mean_readability_df = readability_df.mean().to_frame().T
+    mean_readability_df['doc'] = 'mean'
+
+    std_readability_df = readability_df.std().to_frame().T
+    std_readability_df['doc'] = 'std'
+
+    readability_df = pd.concat([readability_df, mean_readability_df, std_readability_df])
+    readability_df = readability_df.round(3)
     readability_df.to_csv(os.path.join(dir_out, 'readability_statistics.csv'), index=False)
 
+    # lexical richness statistics
     lexical_richness_df = pd.concat(lexical_richness_dfs, axis=0).fillna('nan')
+    lexical_richness_df = lexical_richness_df.drop(columns=['__Dummy__']) if '__Dummy__' in lexical_richness_df.columns else lexical_richness_df
     lexical_richness_df.insert(0, 'doc', infiles)
+
+    mean_lexical_richness_df = lexical_richness_df.mean().to_frame().T
+    mean_lexical_richness_df['doc'] = 'mean'
+
+    std_lexical_richness_df = lexical_richness_df.std().to_frame().T
+    std_lexical_richness_df['doc'] = 'std'
+
+    lexical_richness_df = pd.concat([lexical_richness_df, mean_lexical_richness_df, std_lexical_richness_df])
+    lexical_richness_df = lexical_richness_df.round(3)
     lexical_richness_df.to_csv(os.path.join(dir_out, 'lexical_richness_statistics.csv'), index=False)
 
-    for k in dist.keys():
-        if k != 'ngram_profile':
-            df = pd.concat(distribution_dfs[k], axis=0).fillna('nan')
-            if k == 'word_length_distribution':
-                df = df.sort_index(axis=1)
-            df.insert(0, 'doc', infiles)
-            df.to_csv(os.path.join(dir_out, f'{k}.csv'), index=False)
-#         if int(feature_config['pca']): # group features slightly differently for pca
-#             feature_row = dict()
-#             feature_row['file_id'] = infile
-#             if int(feature_config['stats']):
-#                 for k, v in stats.items():
-#                     if k == 'word_length_distribution':
-#                         for length, n in v.items():
-#                             feature_row[str(length)] = n
-#                     else:
-#                         feature_row[k] = v
-#             if int(feature_config['lexical_richness']):
-#                 for k, v in lr.items():
-#                     feature_row[k] = v
-#             if int(feature_config['readability']):
-#                 for k, v in readability.items():
-#                     feature_row[k] = v
-#             if int(feature_config['distributions']):
-#                 for _, d in dist.items():
-#                     for k, v in d.items():
-#                         if type(v) != dict:
-#                             feature_row[str(k)] = str(v)
-#                         else: # if dictionary within dictionary
-#                             for key, value in v.items():
-#                                 feature_row[key] = value
-#             feature_df = feature_df.append(feature_row, ignore_index=True)
-
-#     if int(feature_config['pca']) and len(df_out)>1:
-#         feature_df.fillna(0, inplace=True)
+    # parsing results
+    parsing_df = pd.DataFrame(data={
+        'document': infiles,
+        'part-of-speech tags': pos_outputs,
+        'syntactic dependencies': dependency_outputs,
+    })
+    parsing_df.to_csv(os.path.join(dir_out, 'parsing_results.csv'), index=False)
     
-#     columns_to_cast_to_integers = [c for c in df_out.columns if c[:2]=='n_']
-#     if type(infiles[0]) != str:
-#         columns_to_cast_to_integers.append('file_id')
-#     df_out = df_out.astype({k: 'int' for k in columns_to_cast_to_integers})
-#     df_out.to_csv(output_config['output_dir'], index=False)
+    # distributions
+    for k in dist.keys():
+        #if k != 'ngram_profile':
+        distribution_dfs[k] = [df if not df.empty else pd.DataFrame([np.nan], columns=['__Empty__']) for df in distribution_dfs[k]] # when there is an empty dataframe, pd.concat ignores this leading to incongruencies in length
+        df = pd.concat(distribution_dfs[k], axis=0).fillna(0)
+        df = df.drop(columns=['__Dummy__']) if '__Dummy__' in df.columns else df
+        df = df.drop(columns=['__Empty__']) if '__Empty__' in df.columns else df
+        if k == 'word_length_distribution':
+            df = df.sort_index(axis=1)
+        df.insert(0, 'doc', infiles)
+        mean_df = df.mean().to_frame().T
+        mean_df['doc'] = 'mean'
+        std_df = df.std().to_frame().T
+        std_df['doc'] = 'std'
+        df = pd.concat([df, mean_df, std_df])
+        df = df.round(3)
+        # if k not in {'ngram_profile', 'function_word_distribution', 'word_length_distribution'}:
+        #     fig = visualizations.generate_bar_chart(df, k)
+        #     fig.write_html(os.path.join(dir_out, 'visualizations', f'{k}.html'))
+        df.to_csv(os.path.join(dir_out, f'{k}.csv'), index=False)
 
-# #PCA___________________________________________________________________________________________
-#     if int(feature_config['pca']) and len(df_out)>2:
-#         feature_columns = [c for c in feature_df.columns if  c != 'file_id']
-#         X = feature_df[feature_columns]
-#         pca = PCA(n_components=2)
-#         components = pca.fit_transform(X)
-#         fig = px.scatter(components, x=0, y=1)
-#         fig.write_image("pca_plot.png")
     print("Done!")
 
 #______________________________________________________________________________________________
