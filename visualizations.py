@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
+import os
 
 def prepare_df(input_df, task_name): 
 
@@ -27,7 +28,7 @@ def prepare_df(input_df, task_name):
 
     return mean_df, std_df
 
-def generate_bar_chart(mean_df, std_df, savename):
+def generate_bar_chart(mean_df, std_df, savename, output_dir):
 
     """
     Generates bar chart visualizations for various feature comparisons.
@@ -103,4 +104,5 @@ def generate_bar_chart(mean_df, std_df, savename):
     fig.update_xaxes(categoryorder='array', categoryarray=sorted_columns)
 
     # Display the plot
-    fig.write_html(savename+'.html')
+    save_path = os.path.join(output_dir, 'visualizations', savename+'.html')
+    fig.write_html(save_path)

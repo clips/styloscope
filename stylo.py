@@ -317,7 +317,7 @@ def main():
         if k != 'function_word_distribution':
             df.insert(0, 'source', ['input corpus']*len(df))
             mean_df, std_df = visualizations.prepare_df(df, k)
-            visualizations.generate_bar_chart(mean_df, std_df, k)
+            visualizations.generate_bar_chart(mean_df, std_df, k, dir_out)
 
     print("Done!")
 
