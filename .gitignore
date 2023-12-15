@@ -5,3 +5,7 @@
 **/nohup.out
 
 **/output/
+
+combine_stats.py
+
+*.csv
