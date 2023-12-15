@@ -2,20 +2,18 @@ from configparser import ConfigParser
 
 config_object = ConfigParser()
 
-config_object["FEATURE_CONFIG"] = {
-    "pos_ngram_range": '(1,1)', # 1 or 0
-    "token_ngram_range": '(1,1)', # 1 or 0
-}
-
 config_object["INPUT_CONFIG"] = {
-    "input": 'personae.zip', #.csv file or path to zip folder
-    "input_format": 'zip', # 'csv' or 'zip'
+    "input": 'reviews.csv', #.csv file or path to zip folder
+    "input_format": 'csv', # 'csv' or 'zip'
     "text_column": 'text', #only relevant if input_format==csv
-    "delimiter": ',' #only relevant if input_format==csv
+    "delimiter": ',', #only relevant if input_format==csv
+    "language": 'Dutch', # Dutch, English, French, German
+    "readability metric": 'RIX', # ARI, ColemanLiau, Flesch, FOG, Kincaid, LIX, RIX, SMOG
+    "lexical diversity metric": "STTR" # TTR, RTTR, CTTR, STTR, Herdan, Summer, Dugast, Maas
 }
 
 config_object["OUTPUT_CONFIG"] = {
-    "output_dir": 'demo_output',
+    "output_dir": 'reviews_output',
     "overwrite_output_dir": '1' # 1 or 0
 }
 

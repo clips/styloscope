@@ -5,7 +5,7 @@ from statistics import mean, stdev
 from tqdm import tqdm
 
 import pandas as pd
-import spacy
+import spacy, pyphen
 import numpy as np
 from spacy.matcher import Matcher
 #______________________________________________________________________________________________
@@ -19,7 +19,6 @@ def main():
     config_object.read('config.ini')
     input_config = config_object["INPUT_CONFIG"] 
     output_config = config_object["OUTPUT_CONFIG"]
-    feature_config = config_object["FEATURE_CONFIG"]
     dir_out = output_config['output_dir']
 
 #LOAD_DATA_____________________________________________________________________________________
@@ -57,7 +56,6 @@ def main():
         'function_word_distribution': [],
         'pos_profile': [],
         'dependency_profile': [],
-        #'ngram_profile': [],
         'word_length_distribution': [],
     }
 
@@ -65,30 +63,49 @@ def main():
     dependency_outputs = []
 
 #PREPROCESSING_________________________________________________________________________________
-    nlp = spacy.load("nl_core_news_sm")
-
-    # Create pattern to match passive voice use
+    
+    # Determine language
+    lang = input_config['language'].strip()
+    if lang == 'Dutch':
+        nlp = spacy.load("nl_core_news_lg")
+        dic = pyphen.Pyphen(lang='nl_NL')
+    elif lang == 'English':
+        nlp = spacy.load("en_core_web_lg")
+        dic = pyphen.Pyphen(lang='en')
+    elif lang == 'French':
+        nlp = spacy.load("fr_core_news_lg")
+        dic = pyphen.Pyphen(lang='fr_FR')
+    elif lang == 'German':
+        nlp = spacy.load("de_core_news_lg")
+        dic = pyphen.Pyphen(lang='de')
+    else:
+        ValueError('Please provide one of the following languages: "Dutch", "English", "French", "German".')
+    
+    # Initialize the SpaCy matcher with a vocab and passive rules
     passive_rules = [
         [{'DEP': 'nsubj:pass'}, {'DEP': 'aux:pass'}],
         [{'DEP': 'aux:pass'}],
         [{'DEP': 'nsubj:pass'}],
     ]
-    
-    matcher = Matcher(nlp.vocab)  # Init. the matcher with a vocab (note matcher vocab must share same vocab with docs)
-    matcher.add('Passive',  passive_rules)  # Add passive rules to matcher
+    matcher = Matcher(nlp.vocab)  
+    matcher.add('Passive',  passive_rules)
+
+    # Check readability and lexical diversity metrics
+    diversity_metric = input_config['lexical diversity metric'].lower().strip()
+    readability_metric = input_config['readability metric'].lower().strip()
   
     print("Processing data...")
-    for text in tqdm(texts):
+    for text in tqdm(texts): # Analyze text by text
 
         # check if text is empty
         if not text.strip():
-            dummy_df = pd.DataFrame(data={'__Dummy__': ['dummy']}) # add dummy data to output, which will be removed at the end
+            dummy_df = pd.DataFrame(data={'__Dummy__': ['dummy']}) # add dummy data to output
             length_dfs.append(dummy_df)
             lexical_richness_dfs.append(dummy_df)
             readability_dfs.append(dummy_df)
             for k in distribution_dfs.keys():
                 distribution_dfs[k].append(dummy_df)
-            continue
+            continue # skip to the next text
 
         # tokenization, parsing, etc.
         doc = nlp(text)
@@ -98,7 +115,7 @@ def main():
         tokenized_sentences = [[t for t, pos in s if pos not in {'PUNCT', 'SYM', 'X'}] for s in parsed_sentences]
         tokens = [t for s in parsed_sentences for t, pos in s if pos not in {'PUNCT', 'SYM', 'X'}]
         types = set([t.lower() for t in tokens])
-        syllables = [[util.get_n_syllables(t) for t, pos in s if pos not in {'PUNCT', 'SYM', 'X'}] for s in parsed_sentences]
+        syllables = [[util.get_n_syllables(t, dic) for t, pos in s if pos not in {'PUNCT', 'SYM', 'X'}] for s in parsed_sentences]
 
         # store parsing results
         pos_outputs.append(' '.join(pos_tags))
@@ -111,7 +128,7 @@ def main():
         n_char = len(text.replace(' ', ''))
         n_syllables = sum([syl for sent in syllables for syl in sent])
         n_polysyllabic = len([i for sent in syllables for i in sent if i > 1])
-        n_longer_than_6_char = len([t for t in tokens if len(t) < 6])
+        n_longer_than_6_char = len([t for t in tokens if len(t) > 6])
         n_types = len(types)
         n_sentences = len(list(doc.sents))
 
@@ -125,7 +142,6 @@ def main():
         std_words_per_sent = stdev([len(s) for s in tokenized_sentences]) if n_sentences > 1 else 0
 
         ratio_long_words = 0 if n_tokens == 0 else n_longer_than_6_char/n_tokens
-        ratio_sentences_negation = mean([util.contains_negation(s) for s in tokenized_sentences])
         ratio_content_words = util.ratio_content_words(doc)
         ratio_passive_sentences = util.get_passive_ratio(doc, matcher)
 
@@ -144,7 +160,6 @@ def main():
         'ratio_long_words': [ratio_long_words],
         'ratio_content_words': [ratio_content_words],
         'ratio_passive_sentences': [ratio_passive_sentences],
-        'ratio_sentences_negation': [ratio_sentences_negation],
         'avg_words_per_sentence': [avg_words_per_sent],
         'std_words_per_sentence': [std_words_per_sent],
         }
@@ -153,48 +168,54 @@ def main():
         length_dfs.append(length_df)
 
 
-#LEXICAL RICHNESS______________________________________________________________________________
-        ttr = util.ttr(n_types, n_tokens) if n_tokens != 0 else None
-        rttr = util.rttr(n_types, n_tokens) if n_tokens != 0 else None
-        cttr = util.cttr(n_types, n_tokens) if n_tokens != 0 else None
-        sttr = util.sttr(tokens) if n_tokens != 0 else None
-        Herdan = util.Herdan(n_types, n_tokens) if n_tokens != 0 else None
-        Summer = util.Summer(n_types, n_tokens) if n_tokens != 0 else None
-        Dugast = util.Dugast(n_types, n_tokens) if n_tokens != 0 else None
-        Maas = util.Maas(n_types, n_tokens) if n_tokens != 0 else None
+#LEXICAL DIVERSITY______________________________________________________________________________
+        if diversity_metric == 'ttr':
+            score = util.ttr(n_types, n_tokens) if n_tokens != 0 else None
+        elif diversity_metric == 'rttr':
+            score = util.rttr(n_types, n_tokens) if n_tokens != 0 else None
+        elif diversity_metric == 'cttr':
+            score = util.cttr(n_types, n_tokens) if n_tokens != 0 else None
+        elif diversity_metric == 'sttr':
+            score = util.sttr(tokens) if n_tokens != 0 else None
+        elif diversity_metric == 'herdan':
+            score = util.Herdan(n_types, n_tokens) if n_tokens != 0 else None
+        elif diversity_metric == 'summer':
+            score = util.Summer(n_types, n_tokens) if n_tokens != 0 else None
+        elif diversity_metric == 'dugast':
+            score = util.Dugast(n_types, n_tokens) if n_tokens != 0 else None
+        elif diversity_metric == 'maas':
+            score = util.Maas(n_types, n_tokens) if n_tokens != 0 else None
+        else:
+            ValueError('Please provide one of the following lexical diversity metrics: "TTR", "RTTR", "CTTR", "STTR", "Herdan", "Summer", "Dugast", "Maas"')
 
         lr = {
-        'TTR': [ttr],
-        'RTTR': [rttr],
-        'CTTR': [cttr],
-        'STTR': [sttr],
-        'Herdan': [Herdan],
-        'Summer': [Summer],
-        'Dugast': [Dugast],
-        'Maas': [Maas]
+        'score': [score],
         }
 
         lexical_richness_dfs.append(pd.DataFrame(data=lr))
 
 #READABILITY___________________________________________________________________________________
-        ARI = util.ARI(n_char, n_tokens, n_sentences) if n_tokens != 0 else None
-        CL = util.ColemanLiau(tokens, tokenized_sentences) if n_tokens != 0 else None
-        Flesch = util.Flesch(avg_words_per_sent, avg_syl_per_word) if n_tokens != 0 else None
-        Fog = util.Fog(avg_words_per_sent, syllables) if n_tokens != 0 else None
-        Kincaid = util.Kincaid(avg_words_per_sent, avg_syl_per_word) if n_tokens != 0 else None
-        LIX = util.LIX(n_tokens, n_sentences, n_longer_than_6_char) if n_tokens != 0 else None
-        RIX = util.RIX(n_longer_than_6_char, n_sentences) if n_tokens != 0 else None
-        SMOG = util.SMOG(syllables) if n_tokens != 0 else None
+        if readability_metric == 'ari':
+            score = util.ARI(n_char, n_tokens, n_sentences) if n_tokens != 0 else None
+        elif readability_metric == 'coleman-liau':
+            score = util.ColemanLiau(tokens, tokenized_sentences) if n_tokens != 0 else None
+        elif readability_metric == 'flesch-kincaid reading ease':
+            score = util.Flesch(avg_words_per_sent, avg_syl_per_word) if n_tokens != 0 else None
+        elif readability_metric == 'flesch-kincaid grade level':
+            score = util.Kincaid(avg_words_per_sent, avg_syl_per_word) if n_tokens != 0 else None
+        elif readability_metric == 'gunning fog':
+            score = util.Fog(avg_words_per_sent, syllables) if n_tokens != 0 else None
+        if readability_metric == 'smog':
+            score = util.SMOG(syllables) if n_tokens != 0 else None
+        elif readability_metric == 'lix':
+            score = util.LIX(n_tokens, n_sentences, n_longer_than_6_char) if n_tokens != 0 else None
+        elif readability_metric == 'rix':
+            score = util.RIX(n_longer_than_6_char, n_sentences) if n_tokens != 0 else None
+        else:
+            ValueError('Please provide one of the following metrics: "ARI", "Coleman-Liau", "Flesch-Kincaid reading ease", "Flesch-kincaid grade level", "Gunning Fog", "SMOG", "LIX", "RIX".')
 
         readability = {
-        'ARI': [ARI],
-        'ColemanLiau': [CL],
-        'Flesch': [Flesch],
-        'FOG': [Fog],
-        'Kincaid': [Kincaid],
-        'LIX': [LIX],
-        'RIX': [RIX],
-        'SMOG': [SMOG],
+            'score': [score],
         }
 
         readability_dfs.append(pd.DataFrame(data=readability))
@@ -204,7 +225,6 @@ def main():
         function_word_distribution = util.get_function_word_distribution(doc)
         pos_profile = util.get_ngram_profile(pos_tags)
         dependency_profile = util.get_dependency_distribution(dependencies)
-        #ngram_profile = util.get_ngram_profile(tokens, eval(feature_config['token_ngram_range']))
         word_length_distribution = util.get_word_length_distribution(tokens)
         
         dist = {
@@ -212,7 +232,6 @@ def main():
             'function_word_distribution': function_word_distribution,
             'pos_profile': pos_profile,
             'dependency_profile': dependency_profile,
-            #'ngram_profile': ngram_profile,
             'word_length_distribution': word_length_distribution,
         }
 
@@ -221,9 +240,11 @@ def main():
             distribution_dfs[dist_name] = distribution_dfs[dist_name] + [df]
     
 #WRITE RESULTS TO OUTPUT_______________________________________________________________________
-    print("Aggregating data and saving results (this may take a few minutes)...")
+    print("Aggregating data, creating visualizations, and saving raw results...")
+
     # length statistics
-    length_df = pd.concat(length_dfs, axis=0).fillna('nan')
+    print('    ...length statistics')
+    length_df = pd.concat(length_dfs, axis=0)
     length_df = length_df.drop(columns=['__Dummy__']) if '__Dummy__' in length_df.columns else length_df
     length_df.insert(0, 'doc', infiles)
 
@@ -238,7 +259,8 @@ def main():
     length_df.to_csv(os.path.join(dir_out, 'length_statistics.csv'), index=False)
 
     # readability statistics
-    readability_df = pd.concat(readability_dfs, axis=0).fillna('nan')
+    print('    ...readability statistics')
+    readability_df = pd.concat(readability_dfs, axis=0)
     readability_df = readability_df.drop(columns=['__Dummy__']) if '__Dummy__' in readability_df.columns else readability_df
     readability_df.insert(0, 'doc', infiles)
 
@@ -253,7 +275,8 @@ def main():
     readability_df.to_csv(os.path.join(dir_out, 'readability_statistics.csv'), index=False)
 
     # lexical richness statistics
-    lexical_richness_df = pd.concat(lexical_richness_dfs, axis=0).fillna('nan')
+    print('    ...lexical richness statistics')
+    lexical_richness_df = pd.concat(lexical_richness_dfs, axis=0)
     lexical_richness_df = lexical_richness_df.drop(columns=['__Dummy__']) if '__Dummy__' in lexical_richness_df.columns else lexical_richness_df
     lexical_richness_df.insert(0, 'doc', infiles)
 
@@ -276,25 +299,25 @@ def main():
     parsing_df.to_csv(os.path.join(dir_out, 'parsing_results.csv'), index=False)
     
     # distributions
+    print('    ...distributions')
     for k in dist.keys():
-        #if k != 'ngram_profile':
         distribution_dfs[k] = [df if not df.empty else pd.DataFrame([np.nan], columns=['__Empty__']) for df in distribution_dfs[k]] # when there is an empty dataframe, pd.concat ignores this leading to incongruencies in length
         df = pd.concat(distribution_dfs[k], axis=0).fillna(0)
         df = df.drop(columns=['__Dummy__']) if '__Dummy__' in df.columns else df
-        df = df.drop(columns=['__Empty__']) if '__Empty__' in df.columns else df
-        if k == 'word_length_distribution':
-            df = df.sort_index(axis=1)
+        df = df.drop(columns=['__Empty__']) if '__Empty__' in df.columns else df          
         df.insert(0, 'doc', infiles)
         mean_df = df.mean().to_frame().T
-        mean_df['doc'] = 'mean'
         std_df = df.std().to_frame().T
+        mean_df['doc'] = 'mean'
         std_df['doc'] = 'std'
         df = pd.concat([df, mean_df, std_df])
         df = df.round(3)
-        # if k not in {'ngram_profile', 'function_word_distribution', 'word_length_distribution'}:
-        #     fig = visualizations.generate_bar_chart(df, k)
-        #     fig.write_html(os.path.join(dir_out, 'visualizations', f'{k}.html'))
         df.to_csv(os.path.join(dir_out, f'{k}.csv'), index=False)
+        # visualizations
+        if k != 'function_word_distribution':
+            df.insert(0, 'source', ['input corpus']*len(df))
+            mean_df, std_df = visualizations.prepare_df(df, k)
+            visualizations.generate_bar_chart(mean_df, std_df, k)
 
     print("Done!")
 

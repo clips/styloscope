@@ -16,23 +16,27 @@ def load_data(input_format, input_dir, text_column=None, delimiter=None):
 		text_column: if input_format==csv, column name containing texts,
 		delimiter: if input_format==csv, delimiter for reading the csv file.
 	Returns:
-		df: dataframe of the corpus,
 		texts: list of strings,
 		infiles: doc indices
 	"""
 
 	if input_format == 'zip': # zip folder with txt
-		df = pd.DataFrame(columns=['filename', 'text'])
+		filenames = []
+		texts = []
+
 		with zipfile.ZipFile(input_dir, 'r') as zip_file:
 			for file_info in zip_file.infolist():
 				if file_info.filename.endswith('.txt'):
 					filename = os.path.basename(file_info.filename)
 					with zip_file.open(file_info) as txt_file:
 						text = txt_file.read().decode('utf-8')  # Assuming UTF-8 encoding
-					df = df.append({'filename': filename, 'text': text}, ignore_index=True)
+						texts.append(text)
+						filenames.append(filename)
+
+		df = pd.DataFrame(data={'filename': filenames, 'text': texts})
 		df = df.sort_values('filename')
 		texts = list(df.text)
-		infiles = list(df.filename)
+		infiles = list(df.filename) 
 	
 	elif input_format == 'csv': 
 		df = pd.read_csv(input_dir, delimiter=delimiter)
@@ -45,37 +49,58 @@ def load_data(input_format, input_dir, text_column=None, delimiter=None):
 	return texts, infiles
 	
 #BASELINE_SYLLABIFIER________________________________________________________________
-def get_n_syllables(word):
+def get_n_syllables(word, dic):
 
 	"""
-	Baseline rule-based syllabification.
+	Syllabification based on Pyphen library.
 	Arguments:
 		word: str
 	Returns:
-		n syllables: int
-	"""
-	vowels = ['a', 'e', 'i', 'o', 'u', 'y']
-	cnt=0
-	for i, char in enumerate(word):
-		previous_char = '-' if i==0 else word[i-1]
-		if char in vowels and previous_char not in vowels:
-			cnt+=1
-	return cnt
-
+		n_syllables: int
+	"""  
+	result = dic.inserted(word).split('-')
+	return len(result)
 
 #STATISTICS__________________________________________________________________________
 def contains_negation(tokenized_sentence, negators={'niet', 'niets', 'geen', 'nooit', 'niemand', 'nergens', 'noch'}):
-    for n in negators:
-        if n in set(t.lower() for t in tokenized_sentence):
-            return True
-    return False
+	"""
+	Detects negation in a sentence
+	Arguments
+		tokenized_sentence: list of tokens
+		negators: lexicon indicating negation
+	Returns
+		Bool
+	"""
+	for n in negators:
+		if n in set(t.lower() for t in tokenized_sentence):
+			return True
+	return False
 
 def ratio_content_words(doc):
-    content = [t.text for s in doc.sents for t in s if t.pos_ in {'ADJ', 'ADV', 'NOUN', 'VERB', 'PROPN'}]
-    funct = [t.text for s in doc.sents for t in s if t.pos_ not in {'ADP', 'AUX', 'CCONJ', 'DET', 'NUM', 'PART', 'PRON', 'SCONJ'}]
-    return len(content)/(len(content)+len(funct))
+	"""
+	Computes ratio of content words (PUNCT, SYM, and X are excluded in this computation)
+	Arguments:
+		doc: Spacy doc object
+	Returns
+		Ratio of content words
+	"""
+	content = [t.text for s in doc.sents for t in s if t.pos_ in {'ADJ', 'ADV', 'NOUN', 'VERB', 'PROPN'}]
+	funct = [t.text for s in doc.sents for t in s if t.pos_ not in {'ADP', 'AUX', 'CCONJ', 'DET', 'NUM', 'PART', 'PRON', 'SCONJ'}]
+	try:
+		return len(content)/(len(content)+len(funct))
+	except (ValueError, ZeroDivisionError):
+		return 0
 
 def get_passive_ratio(doc, matcher):
+
+	"""
+	Computes ratio of sentences that contain a passive verb construction.
+	Arguments:
+		doc: Spacy doc object
+		matcher: Spacy matcher object
+	Returns:
+		Ratio of passive sentencs
+	"""
 
 	total = 0
 	passive = 0
@@ -95,6 +120,28 @@ Various functions for computing lexical richness scores
 def ttr(n_types,n_tokens):
 	return round(n_types/n_tokens, 3)
 
+def sttr(tokens):
+
+	"""
+	Computes standardized type-token ratio (per 100 tokens).
+	Input:
+		tokens: list of tokens
+	Returns:
+		STTR score
+	"""
+
+	if len(tokens) < 100:
+		return None
+
+	ttr_scores = []
+
+	for segment in tokens[::100]:
+		n_types = len(set(segment))
+		n_tokens = len(segment)
+		ttr_scores.append(ttr(n_types, n_tokens))
+	
+	return round(mean(ttr_scores), 3)
+
 def rttr(n_types,n_tokens):
 	return round(n_types/sqrt(n_tokens), 3)
 
@@ -102,16 +149,28 @@ def cttr(n_types,n_tokens):
 	return round(n_types/sqrt(2*n_tokens), 3) 
 
 def Herdan(n_types,n_tokens):
-	return round(log(n_types)/log(n_tokens), 3)
+	try:
+		return round(log(n_types)/log(n_tokens), 3)
+	except (ValueError, ZeroDivisionError):
+		return None
 
 def Summer(n_types,n_tokens):
-	return round(log(log(n_types))/log(log(n_tokens)), 3)
+	try:
+		return round(log(log(n_types))/log(log(n_tokens)), 3)
+	except (ValueError, ZeroDivisionError):
+		return None
 
 def Dugast(n_types,n_tokens):
-	return round((log(n_tokens)**2)/(log(n_tokens)-log(n_types)), 3)
+	try:
+		return round((log(n_tokens)**2)/(log(n_tokens)-log(n_types)), 3)
+	except (ValueError, ZeroDivisionError):
+		return None
 
 def Maas(n_types,n_tokens):
-	return round((log(n_tokens)-log(n_types))/(log(n_tokens)**2), 3) 
+	try:
+		return round((log(n_tokens)-log(n_types))/(log(n_tokens)**2), 3) 
+	except (ValueError, ZeroDivisionError):
+		return None
 
 #READABILITY SCORES__________________________________________________________________
 """
@@ -123,7 +182,7 @@ def ARI(n_char, n_tokens, n_sentences):
 
 def ColemanLiau(tokens, tokenized_sentences):
 	if len(tokens) < 100:
-		return 0
+		return None
 	chunks = [tokens[i:i+100] for i in range(0, len(tokens), 100) if i+100<=len(tokens)]
 	L = mean([len(''.join(chunk)) for chunk in chunks]) # avg. n char per 100 tokens
 	S = len(tokenized_sentences)/len(tokens)*100 # avg. n sent per 100 tokens
@@ -135,8 +194,8 @@ def Flesch(ASL, ASW):
 def Fog(ASL, syllables):
 	syllables = [s for sent in syllables for s in sent]
 	if len(syllables) < 100:
-		return 0
-	PHW = len([s for s in syllables if s >= 3])/len(syllables) # percentage hard words
+		return None
+	PHW = len([s for s in syllables if s >= 3])/len(syllables) # percentage hard words, i.e. at least three syllables
 	return round(0.4*(ASL + PHW), 3)
 
 def Kincaid(ASL, ASW):
@@ -151,12 +210,12 @@ def RIX(n_long_tokens, n_sentences):
 def SMOG(sample):
 	length = len(sample)
 	if length < 30:
-		return 0
+		return None
 	else:
 		i = floor(length/3)
-		sample = sample[:10] + sample[i:i+10] + sample[-10:]
+		sample = sample[:10] + sample[i:i+10] + sample[-10:] # select first 10 sentences, last 10 sentences, and 10 sentences in the middle
 		sample = [s for sent in sample for s in sent]
-	n_polysyllabic = len([s for s in sample if s > 2])
+	n_polysyllabic = len([s for s in sample if s > 2]) # check if more than 2 syllables
 	return round(3+sqrt(n_polysyllabic), 3)
 
 #DISTRIBUTIONS_______________________________________________________________________
@@ -170,7 +229,7 @@ def get_word_length_distribution(tokens):
 	"""
 	lengths = [len(t) for t in tokens]
 	dist = dict(Counter(lengths))
-	dist = {k:round(v/len(tokens), 3) for k,v in dist.items()}
+	dist = {k:v/len(tokens) for k,v in sorted(dist.items(), key=lambda x: x[0])}
 	dist = {int(k): [v] for k,v in dist.items()}
 	return dist
 
@@ -183,7 +242,7 @@ def get_dependency_distribution(dependencies):
 		{dependency: rel_freq}
 	"""
 	dist = dict(Counter(dependencies))
-	dist = {k:round(v/len(dependencies), 3) for k,v in dist.items()}
+	dist = {k:v/len(dependencies) for k,v in dist.items()}
 	dist = {k: [v] for k,v in dist.items()}
 	return dist
 
@@ -199,7 +258,7 @@ def get_grapheme_distribution(tokens):
 	n_total = len(graphemes)
 	dist = dict(Counter(graphemes))
 	for k,v in dist.items():
-		dist[k] = round(v/n_total, 3)
+		dist[k] = v/n_total
 	dist = dict(sorted(dist.items(), key=operator.itemgetter(1),reverse=True))
 	return dist
 
@@ -223,7 +282,7 @@ def get_word_internal_grapheme_profile(tokens):
 				else:
 					profile[g+'_word_internal'] = 1
 	
-	profile = {k:round(v/n_tokens, 3) for k,v in profile.items()}
+	profile = {k:v/n_tokens for k,v in profile.items()}
 	profile = dict(sorted(profile.items(), key=operator.itemgetter(1),reverse=True))
 	return profile
 
@@ -239,7 +298,7 @@ def get_function_word_distribution(doc):
 	function_words = [w.text.lower() for s in doc.sents for w in s if w.pos_ in allowed_pos]
 	n_function_words = len(function_words)
 	dist = dict(Counter(function_words))
-	dist = {k:round(v/n_function_words, 3) for k,v in dist.items()}
+	dist = {k:v/n_function_words for k,v in dist.items()}
 	dist = {k: [v] for k,v in dist.items()}
 	dist = dict(sorted(dist.items(), key=operator.itemgetter(1),reverse=True))
 	return dist
@@ -266,7 +325,7 @@ def get_grapheme_positional_freq(tokens):
 				else:
 					grapheme_freq[t[i-1]] = 1
 
-		grapheme_freq = {k:round(v/n_tokens, 3) for k,v in grapheme_freq.items()}
+		grapheme_freq = {k:v/n_tokens for k,v in grapheme_freq.items()}
 		grapheme_freq = {f'char_idx_{i}_{k}':v for k,v in grapheme_freq.items()}
 		grapheme_freq = dict(sorted(grapheme_freq.items(), key=operator.itemgetter(1),reverse=True))
 		profile['char_idx_'+str(i)] = grapheme_freq
@@ -282,12 +341,16 @@ def get_punct_dist(text):
 		{punct: relative frequency by n characters}
 	"""
 	dist = {}
+	n_punct = 0
 	for p in punctuation:
-		dist[p] = text.count(p)	
+		n = text.count(p)
+		dist[p] = n	
+		n_punct += n
+	
+	if not n_punct:
+		return None
 
-	n_char = len(text.replace(' ', ''))
-
-	dist_by_char = {k: [round(v/n_char, 3)] for k,v in dist.items()}
+	dist_by_char = {k: [v/n_punct] for k,v in dist.items()}
 	dist_by_char = dict(sorted(dist_by_char.items(), key=operator.itemgetter(1),reverse=True))
 	return dist_by_char
 
@@ -315,7 +378,7 @@ def get_positional_word_profile(doc):
 
 	return profile
 
-def get_ngram_profile(tokens, ngram_range):
+def get_ngram_profile(tokens):
 	"""
 	Compute ngram distribution
 	Arguments:
@@ -326,11 +389,11 @@ def get_ngram_profile(tokens, ngram_range):
 	"""
 
 	tokens = [[t.lower() for t in tokens]]
-	vec = CountVectorizer(ngram_range=ngram_range, analyzer=lambda x:x)
+	vec = CountVectorizer(analyzer=lambda x:x)
 	X = vec.fit_transform(tokens)
 	document_lengths = X.sum(axis=1)
 	X_normalized = X / document_lengths
 	profile = dict()
-	for v,k in zip(X_normalized.toarray().flatten(), vec.get_feature_names()):
+	for v,k in zip(X_normalized.toarray().flatten(), vec.get_feature_names_out()):
 		profile[k] = [v]
 	return profile

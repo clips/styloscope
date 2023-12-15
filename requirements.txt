@@ -3,4 +3,5 @@ plotly==5.8.0
 scikit-learn==1.0.2
 kaleido==0.2.1
 spacy==3.5.0
-nl_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/nl_core_news_sm-3.5.0/nl_core_news_sm-3.5.0-py3-none-any.whl
+pyphen==0.14.0
+nl_core_news_lg @ https://github.com/explosion/spacy-models/releases/download/nl_core_news_lg-3.5.0/nl_core_news_lg-3.5.0-py3-none-any.whl
