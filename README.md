@@ -19,7 +19,7 @@ For an online demo, please visit https://stylene.uantwerpen.be/.
 ### Pipeline overview
 
 #### Set up the config file
-In ```create_config.py```, set the input parameters:
+In ```create_config.py```, set the input and output parameters:
 
 ```input```: Full path to the input data
 
@@ -35,7 +35,6 @@ In ```create_config.py```, set the input parameters:
 
 ```lexical diversity metric```: Refers to the metric used to compute lexical diversity. Default is "STTR", other valid options are 'TTR', 'RTTR', 'CTTR', 'Herdan', 'Summer', 'Dugast', 'Maas'.
 
-and output parameters:
 ```output_dir```: folder in which the output of the pipeline is stored
 
 ```overwrite_output_dir```: Boolean that decides whether the overwrite the contents of "output_dir" if this folder already exists
