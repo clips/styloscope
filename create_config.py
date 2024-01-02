@@ -3,7 +3,7 @@ from configparser import ConfigParser
 config_object = ConfigParser()
 
 config_object["INPUT_CONFIG"] = {
-    "input": 'reviews.csv', #.csv file or path to zip folder
+    "input": '', #.csv file or path to zip folder
     "input_format": 'csv', # 'csv' or 'zip'
     "text_column": 'text', #only relevant if input_format==csv
     "delimiter": ',', #only relevant if input_format==csv
@@ -13,7 +13,7 @@ config_object["INPUT_CONFIG"] = {
 }
 
 config_object["OUTPUT_CONFIG"] = {
-    "output_dir": 'reviews_output',
+    "output_dir": 'output',
     "overwrite_output_dir": '1' # 1 or 0
 }
 
