@@ -15,6 +15,7 @@ This repository contains the code to the CLARIAH-VL stylometry analysis pipeline
 
 ### Demo
 For an online demo, please visit https://stylene.uantwerpen.be/.
+For a local demo of the pipeline, run ```python get_demo_data.py```, initialize the config file with ```python create_config.py```, and run ```python stylo.py```. The demo data consists of the test partition of the DBRD (Dutch Book Review Dataset).
 
 ### Pipeline overview
 
