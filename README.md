@@ -24,44 +24,44 @@ For a local demo of the pipeline, run ```python get_demo_data.py```, initialize 
 #### Set up the config file
 In ```create_config.py```, set the input and output parameters:
 
-```input```: Full path to the input data
+1. ```input```: Full path to the input data
 
-```input_format```: Format of the input data. Can be either 'csv' for .csv files, or 'zip' for folders that contain .txt files (one per text).
+2. ```input_format```: Format of the input data. Can be either 'csv' for .csv files, or 'zip' for folders that contain .txt files (one per text).
 
-```text_column```: Only relevant if 'input_format' is 'csv'. Refers to the name of the column that contains the text data, default is 'text'.
+3. ```text_column```: Only relevant if 'input_format' is 'csv'. Refers to the name of the column that contains the text data, default is 'text'.
 
-```delimiter```: Only relevant if 'input_format' is 'csv'. Refers to the column delimiter, default is ','.
+4. ```delimiter```: Only relevant if 'input_format' is 'csv'. Refers to the column delimiter, default is ','.
 
-```language```: language of the input data. Default is 'Dutch', other valid options are 'English', 'French', 'German'
+5. ```language```: language of the input data. Default is 'Dutch', other valid options are 'English', 'French', 'German'
 
-```readability metric```: Refers to the metric used to compute readability. Default is 'RIX', other valid options are 'ARI', 'ColemanLiau', 'Flesch', 'FOG', 'Kincaid', 'LIX', 'SMOG'.
+6. ```readability metric```: Refers to the metric used to compute readability. Default is 'RIX', other valid options are 'ARI', 'ColemanLiau', 'Flesch', 'FOG', 'Kincaid', 'LIX', 'SMOG'.
 
-```lexical diversity metric```: Refers to the metric used to compute lexical diversity. Default is "STTR", other valid options are 'TTR', 'RTTR', 'CTTR', 'Herdan', 'Summer', 'Dugast', 'Maas'.
+7. ```lexical diversity metric```: Refers to the metric used to compute lexical diversity. Default is "STTR", other valid options are 'TTR', 'RTTR', 'CTTR', 'Herdan', 'Summer', 'Dugast', 'Maas'.
 
-```output_dir```: folder in which the output of the pipeline is stored
+8. ```output_dir```: folder in which the output of the pipeline is stored
 
-```overwrite_output_dir```: Boolean that decides whether the overwrite the contents of "output_dir" if this folder already exists
+9. ```overwrite_output_dir```: Boolean that decides whether the overwrite the contents of "output_dir" if this folder already exists
 
 #### Run the pipeline
 To run the pipeline, simply use the following command: ```python stylo.py```
 
 #### Output
-```dependency_profile.csv```: Relative frequencies of dependencies per text.
+1. ```dependency_profile.csv```: Relative frequencies of dependencies per text.
 
-```function_word_distribution.csv```: Relative frequencies of function words per text.
+2. ```function_word_distribution.csv```: Relative frequencies of function words per text.
 
-```length_statistics.csv```: Various statistics regarding the length of the text and words.
+3. ```length_statistics.csv```: Various statistics regarding the length of the text and words.
 
-```lexical_richness_statistics.csv```: Lexical richness score per text (cf. metric specified in the config file).
+4. ```lexical_richness_statistics.csv```: Lexical richness score per text (cf. metric specified in the config file).
 
-```parsing_results.csv```: Parsed texts (part-of-speech tags and syntactic dependencies).
+5. ```parsing_results.csv```: Parsed texts (part-of-speech tags and syntactic dependencies).
 
-```pos_profile.csv```: Relative frequencies of the part-of-speech tags used per text.
+6. ```pos_profile.csv```: Relative frequencies of the part-of-speech tags used per text.
 
-```punctuation_distribution.csv```: Relative frequencies of the punctuation marks used per text.
+7. ```punctuation_distribution.csv```: Relative frequencies of the punctuation marks used per text.
 
-```readability_statistics.csv```: Readability score per text (cf. metric specified in the config file).
+8. ```readability_statistics.csv```: Readability score per text (cf. metric specified in the config file).
 
-```word_length_distribution.csv```: Relative distribution of word lengths per text (in number of characters).
+9. ```word_length_distribution.csv```: Relative distribution of word lengths per text (in number of characters).
 
-```visualizations```: Plotly visualizations of the distributions described above.
+10. ```visualizations```: Plotly visualizations of the distributions described above.
