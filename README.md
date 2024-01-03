@@ -7,7 +7,7 @@ This repository contains the code to the CLARIAH-VL stylometry analysis pipeline
 1. Create a new conda environment using ```conda create -n {name here} python=3.9.18```
 2. Activate the environment with ```conda activate {env_name}```
 3. Clone the respository: ```git clone https://github.com/LemmensJens/CLARIAH-stylo.git```
-4. In this repo's home directory, install requirements with ```pip install -r requirements.txt```
+4. In this repo's home directory, install requirements with ```pip3 install -r requirements.txt```
 
 ### Quick start
 1. Set up the config file.
