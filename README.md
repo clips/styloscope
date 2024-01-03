@@ -19,6 +19,8 @@ For a local demo of the pipeline, run ```python get_demo_data.py```, initialize 
 
 ### Pipeline overview
 
+![Alt text](clariah_stylometry_pipeline.png)
+
 #### Set up the config file
 In ```create_config.py```, set the input and output parameters:
 
