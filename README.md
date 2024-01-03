@@ -1,6 +1,5 @@
 ## Documentation
 
-### Introduction
 This repository contains the code to the CLARIAH-VL stylometry analysis pipeline.
 
 ### Installation
