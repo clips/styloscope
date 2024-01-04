@@ -79,7 +79,8 @@ This table contains the formulas and intended usage of the different readability
 | RIX          | (long words / sentences) + (words / sentences) |        |
 | SMOG         | 1.043 * sqrt(complex words * (30 / sentences)) + 3.1291 |        |
 
-This table contains the formulas of the different lexical richness metrics that can be used in the pipeline. All metrics use the total number of words and the number of unique words to compute a score. We recommend using the standardized type-token ratio (STTR), as it is less prone to influence by varying text lengths.
+
+The following table contains the formulas of the different lexical richness metrics that can be used in the pipeline. All metrics use the total number of words and the number of unique words to compute a score. We recommend using the standardized type-token ratio (STTR), as it is less prone to influence by varying text lengths.
 
 | Metric | Formula                                         | 
 |--------|-------------------------------------------------|
