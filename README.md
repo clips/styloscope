@@ -68,16 +68,16 @@ To run the pipeline, simply use the following command: ```python stylo.py```
 ### User Guidelines
 This table contains the formulas and intended usage of the different readability metrics that can be used in the pipeline:
 
-| Metric       | Formula                                          | Usage  |
+| Metric       | Formula                                          | Language  |
 |--------------|--------------------------------------------------|--------|
-| ARI          | 4.71 * (characters / words) + 0.5 * (words / sentences) - 21.43 |        |
-| ColemanLiau  | 0.0588 * L - 0.296 * S - 15.8 |        |
-| Flesch       | 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words) |        |
-| FOG          | 0.4 * ((words / sentences) + 100 * (complex words / words)) |        |
-| Kincaid      | 11.8 * (syllables / words) + 0.39 * (words / sentences) - 15.59 |        |
-| LIX          | (words / sentences) + (100 * (long words / words)) |        |
-| RIX          | (long words / sentences) + (words / sentences) |        |
-| SMOG         | 1.043 * sqrt(complex words * (30 / sentences)) + 3.1291 |        |
+| ARI          | 4.71 * (characters / words) + 0.5 * (words / sentences) - 21.43 | English |
+| ColemanLiau  | 0.0588 * L - 0.296 * S - 15.8 | English |
+| Flesch       | 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words) | English |
+| Kincaid      | 11.8 * (syllables / words) + 0.39 * (words / sentences) - 15.59 | English |
+| FOG          | 0.4 * ((words / sentences) + 100 * (complex words / words)) | English |
+| LIX          | (words / sentences) + (100 * (long words / words)) | Language-independant |
+| RIX          | (long words / sentences) + (words / sentences) | Language-independant |
+| SMOG         | 1.043 * sqrt(complex words * (30 / sentences)) + 3.1291 | English (originally developed for clinical texts) |
 
 
 The following table contains the formulas of the different lexical richness metrics that can be used in the pipeline. All metrics use the total number of words and the number of unique words to compute a score. We recommend using the standardized type-token ratio (STTR), as it is less prone to influence by varying text lengths.
