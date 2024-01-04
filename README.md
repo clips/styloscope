@@ -66,16 +66,30 @@ To run the pipeline, simply use the following command: ```python stylo.py```
 10. ```visualizations```: Plotly visualizations of the distributions described above.
 
 ### User Guidelines
-This table contains the formulas and intended usage of the different readability and lexical richness metrics that can be used in the pipeline:
+This table contains the formulas and intended usage of the different readability metrics that can be used in the pipeline:
 
 | Metric       | Formula                                          | Usage  |
 |--------------|--------------------------------------------------|--------|
 | ARI          | 4.71 * (characters / words) + 0.5 * (words / sentences) - 21.43 |        |
-| ColemanLiau  | 0.0588 * L - 0.296 * S - 15.8                   |        |
+| ColemanLiau  | 0.0588 * L - 0.296 * S - 15.8 |        |
 | Flesch       | 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words) |        |
 | FOG          | 0.4 * ((words / sentences) + 100 * (complex words / words)) |        |
 | Kincaid      | 11.8 * (syllables / words) + 0.39 * (words / sentences) - 15.59 |        |
 | LIX          | (words / sentences) + (100 * (long words / words)) |        |
-| RIX          | (long words / sentences) + (words / sentences)     |        |
+| RIX          | (long words / sentences) + (words / sentences) |        |
 | SMOG         | 1.043 * sqrt(complex words * (30 / sentences)) + 3.1291 |        |
+
+This table contains the formulas of the different lexical richness metrics that can be used in the pipeline. All metrics use the total number of words and the number of unique words to compute a score. We recommend using the standardized type-token ratio (STTR), as it is less prone to variation caused by text length.
+
+| Metric | Formula                                         | 
+|--------|-------------------------------------------------|
+| TTR    | Number of unique words / Total number of words |
+| STTR   | Mean of TTR scores per 100 words |
+| RTTR   | Number of unique words / sqrt(Total number of words) |
+| CTTR   | Number of unique words / sqrt(2 * Total number of words) |
+| Herdan | log(Number of unique words) / log(Total number of words) |
+| Summer | log( log(Number of unique words) ) / log( log(Total number of words) ) |
+| Dugast | log(Total number of words)**2) / ( log(Total number of words) - log(Number of unique words) ) |
+| Maas   | ( log(Total number of words) - log(Number of unique words) ) / log(Total number of words)**2 |
+
 
