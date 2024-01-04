@@ -80,6 +80,7 @@ This table contains the formulas and intended usage of the different readability
 | SMOG**         | 1.043 * sqrt(complex words * (30 / sentences)) + 3.1291 | English (originally developed for clinical texts);<br />Texts must be longer than 30 sentences. |
 
 *L = Average number of characters per 100 tokens
+ 
  S = Average number of sentences per 100 tokens
 
 **Complex words = words that contain at least 3 syllables
