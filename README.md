@@ -64,3 +64,18 @@ To run the pipeline, simply use the following command: ```python stylo.py```
 9. ```word_length_distribution.csv```: Relative distribution of word lengths per text (in number of characters).
 
 10. ```visualizations```: Plotly visualizations of the distributions described above.
+
+### User Guidelines
+This table contains the formulas and intended usage of the different readability and lexical richness metrics that can be used in the pipeline:
+
+| Metric       | Formula                                          | Usage  |
+|--------------|--------------------------------------------------|--------|
+| ARI          | 4.71 * (characters / words) + 0.5 * (words / sentences) - 21.43 |        |
+| ColemanLiau  | 0.0588 * L - 0.296 * S - 15.8                   |        |
+| Flesch       | 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words) |        |
+| FOG          | 0.4 * ((words / sentences) + 100 * (complex words / words)) |        |
+| Kincaid      | 11.8 * (syllables / words) + 0.39 * (words / sentences) - 15.59 |        |
+| LIX          | (words / sentences) + (100 * (long words / words)) |        |
+| RIX          | (long words / sentences) + (words / sentences)     |        |
+| SMOG         | 1.043 * sqrt(complex words * (30 / sentences)) + 3.1291 |        |
+
