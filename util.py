@@ -135,7 +135,8 @@ def sttr(tokens):
 
 	ttr_scores = []
 
-	for segment in tokens[::100]:
+	for i in range(0, len(tokens), 100):
+		segment = tokens[i:i+100]
 		n_types = len(set(segment))
 		n_tokens = len(segment)
 		ttr_scores.append(ttr(n_types, n_tokens))
