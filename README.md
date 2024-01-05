@@ -74,10 +74,10 @@ This table contains the formulas and intended usage of the different readability
 | Coleman-Liau* | 0.0588 * L - 0.296 * S - 15.8 | English;<br />Texts must be longer than 100 tokens |
 | Flesch reading ease | 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words) | English |
 | Flesch Kincaid grade level | 11.8 * (syllables / words) + 0.39 * (words / sentences) - 15.59 | English |
-| Gunning Fog** | 0.4 * ((words / sentences) + 100 * (complex words / words)) | English;<br />Texts must be longer than 100 syllables |
+| Gunning Fog** | 0.4 * (words / sentences + % complex words) | English;<br />Texts must be longer than 100 syllables |
 | LIX*** | (words / sentences) + (100 * (long words / words)) | Language-independant |
 | RIX*** | (long words / sentences) + (words / sentences) | Language-independant;<br />More interpretable version of LIX |
-| SMOG** | 1.043 * sqrt(complex words * (30 / sentences)) + 3.1291 | English (originally developed for clinical texts);<br />Texts must be longer than 30 sentences. |
+| SMOG** | sqrt(complex words) + 3 | English (originally developed for clinical texts);<br />Texts must be longer than 30 sentences. |
 
 *L = Average number of characters per 100 tokens<br /> S = Average number of sentences per 100 tokens
 
