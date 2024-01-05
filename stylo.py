@@ -106,6 +106,8 @@ def main():
             for k in distribution_dfs.keys():
                 distribution_dfs[k].append(dummy_df)
             continue # skip to the next text
+    
+        text = ' '.join(text.split()) # remove redundant whitespace
 
         # tokenization, parsing, etc.
         doc = nlp(text)
