@@ -3,18 +3,21 @@ import numpy as np
 import plotly.graph_objs as go
 import os
 
-def prepare_df(input_df, task_name): 
+def prepare_df(input_df, task_name, lang): 
 
     """
     Prepares datafame for bar chart visualization.
     """
 
     #load and concatenate reference statistics
-    reference_df = pd.read_csv(f'reference_corpora/{task_name}_combined.csv')
-    if task_name == 'word_length_distribution':
-        reference_df.columns = [int(col) if col not in {"source", "doc"} else col for col in reference_df.columns]
-        input_df.columns = [int(col) if col not in {"source", "doc"} else col for col in input_df.columns]
-    df = pd.concat([input_df, reference_df]).fillna(0)
+    if lang == 'Dutch':
+        reference_df = pd.read_csv(f'reference_corpora/{task_name}_combined.csv')
+        if task_name == 'word_length_distribution':
+            reference_df.columns = [int(col) if col not in {"source", "doc"} else col for col in reference_df.columns]
+            input_df.columns = [int(col) if col not in {"source", "doc"} else col for col in input_df.columns]
+        df = pd.concat([input_df, reference_df]).fillna(0)
+    else:
+        df = input_df.fillna(0)
     
     #get df with only mean statistics
     mean_df = df[df['doc']=='mean']
