@@ -216,7 +216,117 @@ def SMOG(sample):
 		sample = sample[:10] + sample[i:i+10] + sample[-10:] # select first 10 sentences, last 10 sentences, and 10 sentences in the middle
 		sample = [s for sent in sample for s in sent]
 	n_polysyllabic = len([s for s in sample if s > 2]) # check if more than 2 syllables
-	return round(3+sqrt(n_polysyllabic), 3)
+	return round(sqrt(n_polysyllabic) + 3, 3)
+
+def interpret_readability(score, name):
+
+	"""
+	Converts readability score to interpretable results.
+	Arguments:
+		score: float
+		name: readability metric name
+	Returns:
+		string (or None if score is None)
+	"""
+
+	if not score:
+		return None
+	
+	elif name == 'Flesch reading ease':
+		if score >= 90:
+			return "USA 5th Grade"
+		elif score >= 80:
+			return "USA 6th Grade"
+		elif score >= 70:
+			return "USA 7th Grade"
+		elif score >= 60:
+			return "USA 8th-9th Grade"
+		elif score >= 50:
+			return "USA 10th-12th Grade"
+		elif score >= 30:
+			return "USA College Student"
+		elif score >= 10:
+			return "USA College Graduate"
+		else:
+			return "Professional"
+		
+	if name in {'ARI', 'Flesch-Kincaid Grade Level', 'Coleman-Liau', 'Gunning Fog', 'SMOG'}:
+		if score < 1:
+			return "USA Kindergarten"
+		elif score < 2:
+			return "USA 1st Grade"
+		elif score < 3:
+			return "USA 2nd Grade"
+		elif score < 4:
+			return "USA 3rd Grade"
+		elif score < 5:
+			return "USA 4th Grade"
+		elif score < 6:
+			return "USA 5th Grade"
+		elif score < 7:
+			return "USA 6th Grade"
+		elif score < 8:
+			return "USA 7th Grade"
+		elif score < 9:
+			return "USA 8th Grade"
+		elif score < 10:
+			return "USA 9th Grade"
+		elif score < 11:
+			return "USA 10th Grade"
+		elif score < 12:
+			return "USA 11th Grade"
+		elif score < 13:
+			return "USA 12th Grade"
+		elif score < 14:
+			return "USA College Freshman"
+		elif score < 15:
+			return "USA College Sophomore"
+		elif score < 16:
+			return "USA College Junior"
+		elif score < 17:
+			return "USA College Senior"
+		else:
+			return "USA College Graduate"
+		
+	elif name == 'LIX':
+		if score < 30:
+			return "Very easy"
+		elif score < 40:
+			return "Easy"
+		elif score < 50:
+			return "Medium"
+		elif score < 60:
+			return "Difficult"
+		else:
+			return "Very difficult"
+	
+	elif name == 'RIX':
+		if score < 0.2:
+			return "USA 1st Grade"
+		elif score < 0.5:
+			return "USA 2nd Grade"
+		elif score < 0.8:
+			return "USA 3rd Grade"
+		elif score < 1.3:
+			return "USA 4th Grade"
+		elif score < 1.8:
+			return "USA 5th Grade"
+		elif score < 2.4:
+			return "USA 6th Grade"
+		elif score < 3.0:
+			return "USA 7th Grade"
+		elif score < 3.7:
+			return "USA 8th Grade"
+		elif score < 4.5:
+			return "USA 9th Grade"
+		elif score < 5.3:
+			return "USA 10th Grade"
+		elif score < 6.2:
+			return "USA 11th Grade"
+		elif score < 7.2:
+			return "USA 12th Grade"
+		else:
+			return "USA College Level"
 
 #DISTRIBUTIONS_______________________________________________________________________
 def get_word_length_distribution(tokens):
@@ -246,45 +356,45 @@ def get_dependency_distribution(dependencies):
 	dist = {k: [v] for k,v in dist.items()}
 	return dist
 
-def get_grapheme_distribution(tokens):
-	"""
-	Compute grapheme distribution
-	Arguments:
-		tokens: lst
-	Returns:
-		{grapheme: rel_freq}
-	"""
-	graphemes = ''.join(tokens)
-	n_total = len(graphemes)
-	dist = dict(Counter(graphemes))
-	for k,v in dist.items():
-		dist[k] = v/n_total
-	dist = dict(sorted(dist.items(), key=operator.itemgetter(1),reverse=True))
-	return dist
+# def get_grapheme_distribution(tokens):
+# 	"""
+# 	Compute grapheme distribution
+# 	Arguments:
+# 		tokens: lst
+# 	Returns:
+# 		{grapheme: rel_freq}
+# 	"""
+# 	graphemes = ''.join(tokens)
+# 	n_total = len(graphemes)
+# 	dist = dict(Counter(graphemes))
+# 	for k,v in dist.items():
+# 		dist[k] = v/n_total
+# 	dist = dict(sorted(dist.items(), key=operator.itemgetter(1),reverse=True))
+# 	return dist
 
-def get_word_internal_grapheme_profile(tokens):
-	"""
-	Compute word-interal grapheme distribution
-	Arguments:
-		tokens: lst
-	Returns:
-		{grapheme: % of wors that contain grapheme}
-	"""
-	graphemes = set(''.join(tokens))
-	n_tokens = len(tokens)
-	profile = {}
+# def get_word_internal_grapheme_profile(tokens):
+# 	"""
+# 	Compute word-interal grapheme distribution
+# 	Arguments:
+# 		tokens: lst
+# 	Returns:
+# 		{grapheme: % of wors that contain grapheme}
+# 	"""
+# 	graphemes = set(''.join(tokens))
+# 	n_tokens = len(tokens)
+# 	profile = {}
 
-	for g in graphemes:
-		for t in tokens:
-			if g in t:
-				if g in profile.keys():
-					profile[g+'_word_internal'] += 1
-				else:
-					profile[g+'_word_internal'] = 1
+# 	for g in graphemes:
+# 		for t in tokens:
+# 			if g in t:
+# 				if g in profile.keys():
+# 					profile[g+'_word_internal'] += 1
+# 				else:
+# 					profile[g+'_word_internal'] = 1
 	
-	profile = {k:v/n_tokens for k,v in profile.items()}
-	profile = dict(sorted(profile.items(), key=operator.itemgetter(1),reverse=True))
-	return profile
+# 	profile = {k:v/n_tokens for k,v in profile.items()}
+# 	profile = dict(sorted(profile.items(), key=operator.itemgetter(1),reverse=True))
+# 	return profile
 
 def get_function_word_distribution(doc):
 	"""
@@ -303,34 +413,34 @@ def get_function_word_distribution(doc):
 	dist = dict(sorted(dist.items(), key=operator.itemgetter(1),reverse=True))
 	return dist
 
-def get_grapheme_positional_freq(tokens):
-	"""
-	Compute positional frequency of graphemes
-	Arguments:
-		tokens: lst
-	Returns:
-		{pos_idx_in_token: {char: rel_freq}
-	"""
-	n_tokens = len(tokens)
-	lengths = [len(t) for t in tokens]
-	longest = sorted(lengths)[-1]
-	profile={}
+# def get_grapheme_positional_freq(tokens):
+# 	"""
+# 	Compute positional frequency of graphemes
+# 	Arguments:
+# 		tokens: lst
+# 	Returns:
+# 		{pos_idx_in_token: {char: rel_freq}
+# 	"""
+# 	n_tokens = len(tokens)
+# 	lengths = [len(t) for t in tokens]
+# 	longest = sorted(lengths)[-1]
+# 	profile={}
 	
-	for i in range(1, longest+1):
-		grapheme_freq = {}
-		for t in tokens:
-			if len(t) >= i:
-				if t[i-1] in grapheme_freq.keys():
-					grapheme_freq[t[i-1]] += 1
-				else:
-					grapheme_freq[t[i-1]] = 1
+# 	for i in range(1, longest+1):
+# 		grapheme_freq = {}
+# 		for t in tokens:
+# 			if len(t) >= i:
+# 				if t[i-1] in grapheme_freq.keys():
+# 					grapheme_freq[t[i-1]] += 1
+# 				else:
+# 					grapheme_freq[t[i-1]] = 1
 
-		grapheme_freq = {k:v/n_tokens for k,v in grapheme_freq.items()}
-		grapheme_freq = {f'char_idx_{i}_{k}':v for k,v in grapheme_freq.items()}
-		grapheme_freq = dict(sorted(grapheme_freq.items(), key=operator.itemgetter(1),reverse=True))
-		profile['char_idx_'+str(i)] = grapheme_freq
+# 		grapheme_freq = {k:v/n_tokens for k,v in grapheme_freq.items()}
+# 		grapheme_freq = {f'char_idx_{i}_{k}':v for k,v in grapheme_freq.items()}
+# 		grapheme_freq = dict(sorted(grapheme_freq.items(), key=operator.itemgetter(1),reverse=True))
+# 		profile['char_idx_'+str(i)] = grapheme_freq
 
-	return profile
+# 	return profile
 
 def get_punct_dist(text):
 	"""
@@ -354,29 +464,29 @@ def get_punct_dist(text):
 	dist_by_char = dict(sorted(dist_by_char.items(), key=operator.itemgetter(1),reverse=True))
 	return dist_by_char
 
-def get_positional_word_profile(doc):
-	"""
-	Compute positional word profile
-	Arguments:
-		doc: stanza doc object
-	Returns:
-		{token idx in sentence: {word: relative freq}}
-	"""
-	tokens = [[w.text.lower() for w in s] for s in doc.sents]
-	n_positions = max([len(s) for s in tokens])
-	profile = {}
+# def get_positional_word_profile(doc):
+# 	"""
+# 	Compute positional word profile
+# 	Arguments:
+# 		doc: stanza doc object
+# 	Returns:
+# 		{token idx in sentence: {word: relative freq}}
+# 	"""
+# 	tokens = [[w.text.lower() for w in s] for s in doc.sents]
+# 	n_positions = max([len(s) for s in tokens])
+# 	profile = {}
 
-	for i in range(n_positions):
-		k = i
-		words = [s[k] for s in tokens if len(s)>k]
-		n_sentences = len(words)
-		v = dict(Counter(words))
-		v = {k:v/n_sentences for k,v in v.items()}
-		v = {f'token_idx_{str(i)}_{k}':v for k,v in v.items()}
-		v = dict(sorted(v.items(), key=operator.itemgetter(1),reverse=True))
-		profile['token_idx_'+str(k)] = v
+# 	for i in range(n_positions):
+# 		k = i
+# 		words = [s[k] for s in tokens if len(s)>k]
+# 		n_sentences = len(words)
+# 		v = dict(Counter(words))
+# 		v = {k:v/n_sentences for k,v in v.items()}
+# 		v = {f'token_idx_{str(i)}_{k}':v for k,v in v.items()}
+# 		v = dict(sorted(v.items(), key=operator.itemgetter(1),reverse=True))
+# 		profile['token_idx_'+str(k)] = v
 
-	return profile
+# 	return profile
 
 def get_ngram_profile(tokens):
 	"""

@@ -91,8 +91,8 @@ def main():
     matcher.add('Passive',  passive_rules)
 
     # Check readability and lexical diversity metrics
-    diversity_metric = input_config['lexical diversity metric'].lower().strip()
-    readability_metric = input_config['readability metric'].lower().strip()
+    diversity_metric = input_config['lexical diversity metric'].strip()
+    readability_metric = input_config['readability metric'].strip()
   
     print("Processing data...")
     for text in tqdm(texts): # Analyze text by text
@@ -169,21 +169,21 @@ def main():
 
 
 #LEXICAL DIVERSITY______________________________________________________________________________
-        if diversity_metric == 'ttr':
+        if diversity_metric == 'TTR':
             score = util.ttr(n_types, n_tokens) if n_tokens != 0 else None
-        elif diversity_metric == 'rttr':
+        elif diversity_metric == 'RTTR':
             score = util.rttr(n_types, n_tokens) if n_tokens != 0 else None
-        elif diversity_metric == 'cttr':
+        elif diversity_metric == 'CTTR':
             score = util.cttr(n_types, n_tokens) if n_tokens != 0 else None
-        elif diversity_metric == 'sttr':
+        elif diversity_metric == 'STTR':
             score = util.sttr(tokens) if n_tokens != 0 else None
-        elif diversity_metric == 'herdan':
+        elif diversity_metric == 'Herdan':
             score = util.Herdan(n_types, n_tokens) if n_tokens != 0 else None
-        elif diversity_metric == 'summer':
+        elif diversity_metric == 'Summer':
             score = util.Summer(n_types, n_tokens) if n_tokens != 0 else None
-        elif diversity_metric == 'dugast':
+        elif diversity_metric == 'Dugast':
             score = util.Dugast(n_types, n_tokens) if n_tokens != 0 else None
-        elif diversity_metric == 'maas':
+        elif diversity_metric == 'Maas':
             score = util.Maas(n_types, n_tokens) if n_tokens != 0 else None
         else:
             ValueError('Please provide one of the following lexical diversity metrics: "TTR", "RTTR", "CTTR", "STTR", "Herdan", "Summer", "Dugast", "Maas"')
@@ -195,27 +195,30 @@ def main():
         lexical_richness_dfs.append(pd.DataFrame(data=lr))
 
 #READABILITY___________________________________________________________________________________
-        if readability_metric == 'ari':
+        if readability_metric == 'ARI':
             score = util.ARI(n_char, n_tokens, n_sentences) if n_tokens != 0 else None
-        elif readability_metric == 'coleman-liau':
+        elif readability_metric == 'Coleman-Liau':
             score = util.ColemanLiau(tokens, tokenized_sentences) if n_tokens != 0 else None
-        elif readability_metric == 'flesch-kincaid reading ease':
+        elif readability_metric == 'Flesch reading ease':
             score = util.Flesch(avg_words_per_sent, avg_syl_per_word) if n_tokens != 0 else None
-        elif readability_metric == 'flesch-kincaid grade level':
+        elif readability_metric == 'Flesch Kincaid grade level':
             score = util.Kincaid(avg_words_per_sent, avg_syl_per_word) if n_tokens != 0 else None
-        elif readability_metric == 'gunning fog':
+        elif readability_metric == 'Gunning Fog':
             score = util.Fog(avg_words_per_sent, syllables) if n_tokens != 0 else None
-        if readability_metric == 'smog':
+        if readability_metric == 'SMOG':
             score = util.SMOG(syllables) if n_tokens != 0 else None
-        elif readability_metric == 'lix':
+        elif readability_metric == 'LIX':
             score = util.LIX(n_tokens, n_sentences, n_longer_than_6_char) if n_tokens != 0 else None
-        elif readability_metric == 'rix':
+        elif readability_metric == 'RIX':
             score = util.RIX(n_longer_than_6_char, n_sentences) if n_tokens != 0 else None
         else:
-            ValueError('Please provide one of the following metrics: "ARI", "Coleman-Liau", "Flesch-Kincaid reading ease", "Flesch-kincaid grade level", "Gunning Fog", "SMOG", "LIX", "RIX".')
+            ValueError('Please provide one of the following metrics: "ARI", "Coleman-Liau", "Flesch reading ease", "Flesch Kincaid grade level", "Gunning Fog", "SMOG", "LIX", "RIX".')
+
+        interpretation = util.interpret_readability(score, readability_metric)
 
         readability = {
             'score': [score],
+            'interpretation': [interpretation]
         }
 
         readability_dfs.append(pd.DataFrame(data=readability))

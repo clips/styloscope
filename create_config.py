@@ -8,7 +8,7 @@ config_object["INPUT_CONFIG"] = {
     "text_column": 'text', #only relevant if input_format==csv
     "delimiter": ',', #only relevant if input_format==csv
     "language": 'Dutch', # Dutch, English, French, German
-    "readability metric": 'RIX', # ARI, ColemanLiau, Flesch, FOG, Kincaid, LIX, RIX, SMOG
+    "readability metric": 'RIX', # ARI, Coleman-Liau, Flesch reading ease, Flesch Kincaid grade level, Gunning Fog, SMOG, LIX, RIX
     "lexical diversity metric": "STTR" # TTR, RTTR, CTTR, STTR, Herdan, Summer, Dugast, Maas
 }
 
