@@ -8,7 +8,6 @@ def prepare_df(input_df, task_name, lang):
     """
     Prepares datafame for bar chart visualization.
     """
-
     #load and concatenate reference statistics
     if lang == 'Dutch':
         reference_df = pd.read_csv(f'reference_corpora/{task_name}_combined.csv')
@@ -84,10 +83,12 @@ def generate_bar_chart(mean_df, std_df, savename, output_dir):
     # Define layout for the plot
     layout = go.Layout(
         barmode='group',
-        xaxis=dict(title=task_to_feature[savename]),
-        yaxis=dict(title='relative frequency'),
-        title=task_to_title[savename],
+        width=1024,
+        height=512,
         showlegend=True,
+        plot_bgcolor='rgba(0, 0, 0, 0)',
+        paper_bgcolor='rgba(0, 0, 0, 0)',
+        template='plotly_dark',
     )
 
     # Create the figure
@@ -109,3 +110,5 @@ def generate_bar_chart(mean_df, std_df, savename, output_dir):
     # Display the plot
     save_path = os.path.join(output_dir, 'visualizations', savename+'.html')
     fig.write_html(save_path)
+
+    return fig
