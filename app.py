@@ -2,47 +2,29 @@ import gradio as gr
 import pandas as pd
 import stylo_app
 
-theme = gr.themes.Soft(
-    primary_hue="amber",
-    secondary_hue="amber",
-    neutral_hue="neutral",
-    font=['Montserrat', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-    font_mono=['IBM Plex Mono', 'ui-monospace', 'Consolas', 'monospace'],
-)
-
 css = """
 h1 {
     display: block;
     text-align: center;
-    font-size: 50pt;
+    font-size: 32pt;
 }
-
-.gradio-container {
-    background-color: #222222;
-}
-
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th, td {
-  border-right: 1px solid white; /* Vertical border between columns */
-  padding: 0.3em;
-}
-
-tr:not(:first-child) td {
-  border-bottom: 1px solid white; /* Horizontal border after the first row */
-}
-
-th {
-  border-top: 1px solid white; /* Border above the header */
-}
-
-th:last-child, td:last-child {
-  border-right: none; 
+.progress-bar-wrap.progress-bar-wrap.progress-bar-wrap
+{
+	border-radius: var(--input-radius);
+	height: 1.25rem;
+	margin-top: 1rem;
+	overflow: hidden;
+	width: 70%;
 }
 """
+theme = gr.themes.Soft(
+    primary_hue="indigo",
+    secondary_hue="amber",
+).set(
+    button_primary_background_fill='*secondary_500',
+    button_primary_background_fill_hover='*secondary_400',
+    block_label_background_fill='*primary_50',
+)
 
 def visible_output(input_text):
     return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
@@ -50,17 +32,19 @@ def visible_output(input_text):
 def visible_plots(file):
     return gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)
 
-with gr.Blocks(title="Stylene", theme=theme, css=css) as demo:
-    title = gr.Markdown("""# Stylene""")
+with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as demo:
+    title = gr.Markdown("""# CLARIAH-VL Stylometry Pipeline""")
     
     with gr.Tab("Pipeline"):
 
         # components
-        file = gr.File(file_types = ['.csv'], file_count = "single")
-        lang = gr.Dropdown(["Dutch", "English", "French", "German"], label="Language", value="Dutch", interactive=True)
-        readability = gr.Dropdown(["ARI", "Coleman-Liau", "Flesch reading ease", "Flesch Kincaid grade level", "Gunning Fog", "SMOG", "LIX", "RIX"], label="Readability metric", value="RIX", interactive=True)
-        diversity = gr.Dropdown(["STTR", "TTR", "RTTR", "CTTR", "Herdan", "Summer", "Dugast", "Maas"], label="Lexical diversity metric", value="STTR", interactive=True)
-        button = gr.Button('Submit')
+        file = gr.File(file_types = ['.csv', '.zip'], file_count = "single")
+
+        with gr.Row():
+            lang = gr.Dropdown(["Dutch", "English", "French", "German"], label="Language", value="Dutch", interactive=True)
+            readability = gr.Dropdown(["ARI", "Coleman-Liau", "Flesch reading ease", "Flesch Kincaid grade level", "Gunning Fog", "SMOG", "LIX", "RIX"], label="Readability metric", value="RIX", interactive=True)
+            diversity = gr.Dropdown(["STTR", "TTR", "RTTR", "CTTR", "Herdan", "Summer", "Dugast", "Maas"], label="Lexical diversity metric", value="STTR", interactive=True)
+        button = gr.Button('Submit', variant='primary')
 
         # outputs
         zip_out = gr.File(label='Output', visible=False)
@@ -82,8 +66,19 @@ with gr.Blocks(title="Stylene", theme=theme, css=css) as demo:
                     inputs=file,
                     outputs=[dep_plot, pos_plot, punct_plot, len_plot]
                 )
+    
+    with gr.Tab("Authorship attribution demo"):
+        gr.load("jenslemmens/xlm_roberta_text_genre_classification_nl", src="models", title="", description="**Text genre prediction**")
+        gr.load("jenslemmens/dutch_gender_classifier", src="models", title="", description="**Gender prediction**")
         
     with gr.Tab("User guidelines"):
+
+        gr.Markdown("""### Input""")
+        gr.Markdown("""The input of the pipeline must be either a .zip folder containing UTF8-encoded .txt files, or a .csv file containing one document per row (this can be a complete text or, if desired, a single sentence). The documents should be placed under a column named "text". Additional columns are allowed and do not affect the pipeline.""")
+        
+        gr.Markdown("""### Language""")
+        gr.Markdown("""The user must specify the language of the input corpus (Dutch, French, German, English). Note that the tools used in this pipeline have been trained on standard, contemporary language, and will therefore perform best on this type of data. When using a multilingual corpus, it is best to split up the data per language and run the pipeline multiple times while selecting a different language per run.""")
+
         gr.Markdown("""### Readability metrics""")
         gr.Markdown(
             """
@@ -106,6 +101,7 @@ with gr.Blocks(title="Stylene", theme=theme, css=css) as demo:
             ***Long words = words longer than 6 characters
             """
         )
+
         gr.Markdown("""### Lexical diversity metrics""")
         gr.Markdown("""
             We recommend using the standardized type-token ratio (STTR), since it is less likely to be influenced by varying text lengths.
@@ -121,5 +117,19 @@ with gr.Blocks(title="Stylene", theme=theme, css=css) as demo:
             | Maas   | ( log(Total number of words) - log(Number of unique words) ) / log(Total number of words)**2 |
             """
         )
+    
+    with gr.Tab("About"):
+        gr.Markdown("""        
+        ### Project
+        This stylometry pipeline was developed by [CLiPS](https://www.uantwerpen.be/en/research-groups/clips/) ([University of Antwerp](https://www.uantwerpen.be/en/)) during the [CLARIAH-VL](https://clariahvl.hypotheses.org/) project.
 
-demo.queue(default_concurrency_limit=10).launch(share=True)
+        ### Contact
+        If you have questions, please send them to [Jens Lemmens](mailto:jens.lemmens@uantwerpen.be) or [Walter Daelemans](mailto:walter.daelemans@uantwerpen.be)
+        """)
+    
+    with gr.Row():
+        gr.Markdown("""<center><img src="https://platformdh.uantwerpen.be/wp-content/uploads/2019/03/clariah_def.png" alt="Image" width="200"/></center>""")
+        gr.Markdown("""<center><img src="https://thomasmore.be/sites/default/files/2022-11/UA-hor-1-nl-rgb.jpg" alt="Image" width="175"/></center>""")
+
+
+demo.queue(default_concurrency_limit=10).launch(share=True, allowed_paths=['./assets/'])

@@ -27,7 +27,8 @@ def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(tr
     os.mkdir(os.path.join(dir_out, 'visualizations'))
 
 #LOAD_DATA_____________________________________________________________________________________
-    texts, infiles = util.load_data('csv', fn, 'text', ',')
+    format = 'csv' if fn[-3:] == 'csv' else 'zip'
+    texts, infiles = util.load_data(format, fn, 'text', ',')
     
 #PREPARE_OUTPUT_DIR____________________________________________________________________________
 
@@ -311,6 +312,8 @@ def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(tr
                 len_plot = plt
             else:
                 pass
+
+    progress(1, desc="Done!")
 
     return (
         shutil.make_archive(base_name='output', format='zip', base_dir='output', root_dir='.'),

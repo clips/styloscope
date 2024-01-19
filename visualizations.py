@@ -86,9 +86,9 @@ def generate_bar_chart(mean_df, std_df, savename, output_dir):
         width=1024,
         height=512,
         showlegend=True,
-        plot_bgcolor='rgba(0, 0, 0, 0)',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
-        template='plotly_dark',
+        # plot_bgcolor='rgba(0, 0, 0, 0)',
+        # paper_bgcolor='rgba(0, 0, 0, 0)',
+        template='plotly_white', #ploty_dark
     )
 
     # Create the figure
