@@ -38,12 +38,14 @@ with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as 
     with gr.Tab("Pipeline"):
 
         # components
-        file = gr.File(file_types = ['.csv', '.zip'], file_count = "single")
+        with gr.Row(variant='panel'):
+            file = gr.File(file_types = ['.csv', '.zip'], file_count = "single")
 
-        with gr.Row():
+        with gr.Row(variant='panel'):
             lang = gr.Dropdown(["Dutch", "English", "French", "German"], label="Language", value="Dutch", interactive=True)
             readability = gr.Dropdown(["ARI", "Coleman-Liau", "Flesch reading ease", "Flesch Kincaid grade level", "Gunning Fog", "SMOG", "LIX", "RIX"], label="Readability metric", value="RIX", interactive=True)
             diversity = gr.Dropdown(["STTR", "TTR", "RTTR", "CTTR", "Herdan", "Summer", "Dugast", "Maas"], label="Lexical diversity metric", value="STTR", interactive=True)
+        
         button = gr.Button('Submit', variant='primary')
 
         # outputs
