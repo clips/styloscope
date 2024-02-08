@@ -27,10 +27,10 @@ theme = gr.themes.Soft(
 )
 
 def visible_output(input_text):
-    return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
+    return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
 
 def visible_plots(file):
-    return gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)
+    return gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)
 
 with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as demo:
     title = gr.Markdown("""# CLARIAH-VL Stylometry Pipeline""")
@@ -50,6 +50,7 @@ with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as 
 
         # outputs
         zip_out = gr.File(label='Output', visible=False)
+        basic_statistics = gr.Dataframe(headers=['Corpus statistics', 'Mean', 'Std.'], visible=False)
         dep_plot = gr.Plot(label='Distribution of syntactic dependencies', show_label=True, visible=False)
         pos_plot = gr.Plot(label='Distribution of part-of-speech tags', show_label=True, visible=False)
         punct_plot = gr.Plot(label='Distribution of punctuation marks', show_label=True, visible=False)
@@ -62,11 +63,11 @@ with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as 
             ).then( # then run pipeline
                 stylo_app.main, 
                 inputs=[file, lang, readability, diversity], 
-                outputs=[zip_out, dep_plot, pos_plot, punct_plot, len_plot]
+                outputs=[zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
                 ).then( # then make plots visible
                     visible_plots,
                     inputs=file,
-                    outputs=[dep_plot, pos_plot, punct_plot, len_plot]
+                    outputs=[basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
                 )
     
     with gr.Tab("Authorship attribution demo"):
@@ -134,4 +135,4 @@ with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as 
         gr.Markdown("""<center><img src="https://thomasmore.be/sites/default/files/2022-11/UA-hor-1-nl-rgb.jpg" alt="Image" width="175"/></center>""")
 
 
-demo.queue(default_concurrency_limit=10).launch(share=True, allowed_paths=['./assets/'])
+demo.queue(default_concurrency_limit=10).launch(share=False)

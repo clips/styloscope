@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 import pandas as pd
 import gradio as gr
-import spacy, pyphen
+import spacy, pyphen, uuid
 import numpy as np
 from spacy.matcher import Matcher
 #______________________________________________________________________________________________
@@ -14,17 +14,26 @@ from spacy.matcher import Matcher
 def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(track_tqdm=True)):
 
     progress(0, desc="Starting pipeline...")
+
+    unique_output_id = str(uuid.uuid4())
     
     warnings.simplefilter(action='ignore', category=FutureWarning)
 
     # if overwrite_output_dir is True, delete the directory
     # else, check if output dir exists already and return error if it does
     # create the output directory
-    dir_out = 'output'
-    if os.path.exists(dir_out):
-        shutil.rmtree(dir_out)
-    os.mkdir(dir_out)
-    os.mkdir(os.path.join(dir_out, 'visualizations'))
+
+    # first check if directory where all outputs are stored exists
+    main_dir_out = 'outputs'
+    if not os.path.exists(main_dir_out):
+        os.mkdir(main_dir_out)
+
+    # then create unique output dir for process
+    unique_dir_out = os.path.join(main_dir_out, unique_output_id)
+    if os.path.exists(unique_dir_out): # this should not happen in theory
+        shutil.rmtree(unique_dir_out)
+    os.mkdir(unique_dir_out)
+    os.mkdir(os.path.join(unique_dir_out, 'visualizations'))
 
 #LOAD_DATA_____________________________________________________________________________________
     format = 'csv' if fn[-3:] == 'csv' else 'zip'
@@ -239,7 +248,7 @@ def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(tr
 
     length_df = pd.concat([length_df, mean_length_df, std_length_df])
     length_df = length_df.round(3)
-    length_df.to_csv(os.path.join(dir_out, 'length_statistics.csv'), index=False)
+    length_df.to_csv(os.path.join(unique_dir_out, 'length_statistics.csv'), index=False)
 
     # readability statistics
     print('    ...readability statistics')
@@ -249,13 +258,14 @@ def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(tr
 
     mean_readability_df = readability_df.mean().to_frame().T
     mean_readability_df['doc'] = 'mean'
+    mean_readability_df = mean_readability_df.round(3)
 
     std_readability_df = readability_df.std().to_frame().T
     std_readability_df['doc'] = 'std'
+    std_readability_df = std_readability_df.round(3)
 
     readability_df = pd.concat([readability_df, mean_readability_df, std_readability_df])
-    readability_df = readability_df.round(3)
-    readability_df.to_csv(os.path.join(dir_out, 'readability_statistics.csv'), index=False)
+    readability_df.to_csv(os.path.join(unique_dir_out, 'readability_statistics.csv'), index=False)
 
     # lexical richness statistics
     print('    ...lexical richness statistics')
@@ -265,13 +275,14 @@ def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(tr
 
     mean_lexical_richness_df = lexical_richness_df.mean().to_frame().T
     mean_lexical_richness_df['doc'] = 'mean'
+    mean_lexical_richness_df = mean_lexical_richness_df.round(3)
 
     std_lexical_richness_df = lexical_richness_df.std().to_frame().T
     std_lexical_richness_df['doc'] = 'std'
+    std_lexical_richness_df = std_lexical_richness_df.round(3)
 
     lexical_richness_df = pd.concat([lexical_richness_df, mean_lexical_richness_df, std_lexical_richness_df])
-    lexical_richness_df = lexical_richness_df.round(3)
-    lexical_richness_df.to_csv(os.path.join(dir_out, 'lexical_richness_statistics.csv'), index=False)
+    lexical_richness_df.to_csv(os.path.join(unique_dir_out, 'lexical_richness_statistics.csv'), index=False)
 
     # parsing results
     parsing_df = pd.DataFrame(data={
@@ -279,7 +290,7 @@ def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(tr
         'part-of-speech tags': pos_outputs,
         'syntactic dependencies': dependency_outputs,
     })
-    parsing_df.to_csv(os.path.join(dir_out, 'parsing_results.csv'), index=False)
+    parsing_df.to_csv(os.path.join(unique_dir_out, 'parsing_results.csv'), index=False)
     
     # distributions
     print('    ...distributions')
@@ -295,13 +306,13 @@ def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(tr
         std_df['doc'] = 'std'
         df = pd.concat([df, mean_df, std_df])
         df = df.round(3)
-        df.to_csv(os.path.join(dir_out, f'{k}.csv'), index=False)
+        df.to_csv(os.path.join(unique_dir_out, f'{k}.csv'), index=False)
         
         # visualizations
         if k != 'function_word_distribution':
             df.insert(0, 'source', ['input corpus']*len(df))
             mean_df, std_df = visualizations.prepare_df(df, k, lang)
-            plt = visualizations.generate_bar_chart(mean_df, std_df, k, dir_out)
+            plt = visualizations.generate_bar_chart(mean_df, std_df, k, unique_dir_out)
             if k == 'punctuation_distribution':
                 punct_plot = plt 
             elif k == 'dependency_profile':
@@ -313,10 +324,31 @@ def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(tr
             else:
                 pass
 
+    basic_statistics = pd.DataFrame(data={
+        'Corpus statistics': ['n Tokens', 'n Sentences', 'n Syllables', 'n Characters', 'Lexical diversity', 'Readability'],
+        'Mean': [
+            length_df.iloc[-2]['n_tokens'],
+            length_df.iloc[-2]['n_sentences'],
+            length_df.iloc[-2]['n_syllables'],
+            length_df.iloc[-2]['n_characters'],
+            lexical_richness_df.iloc[-2]['score'],
+            readability_df.iloc[-2]['score']
+            ],
+        'Std.': [
+            length_df.iloc[-1]['n_tokens'],
+            length_df.iloc[-1]['n_sentences'],
+            length_df.iloc[-1]['n_syllables'],
+            length_df.iloc[-1]['n_characters'],
+            lexical_richness_df.iloc[-1]['score'],
+            readability_df.iloc[-1]['score']
+            ]
+    })
+
     progress(1, desc="Done!")
 
     return (
-        shutil.make_archive(base_name='output', format='zip', base_dir='output', root_dir='.'),
+        shutil.make_archive(base_name=os.path.join(unique_dir_out), format='zip', base_dir=unique_dir_out),
+        basic_statistics,
         dep_plot,
         pos_plot,
         punct_plot,
