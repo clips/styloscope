@@ -26,6 +26,15 @@ theme = gr.themes.Soft(
     block_label_background_fill='*primary_50',
 )
 
+def show_sttr_span_textbox(metric):
+    """
+    Used to toggle token span size parameter when STTR is selected as diversity metric.
+    """
+    if metric == "STTR":
+        return gr.update(visible=True)
+    else: 
+        return gr.update(visible=False)
+
 def visible_output(input_text):
     return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
 
@@ -45,6 +54,11 @@ with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as 
             lang = gr.Dropdown(["Dutch", "English", "French", "German"], label="Language", value="Dutch", interactive=True)
             readability = gr.Dropdown(["ARI", "Coleman-Liau", "Flesch reading ease", "Flesch Kincaid grade level", "Gunning Fog", "SMOG", "LIX", "RIX"], label="Readability metric", value="RIX", interactive=True)
             diversity = gr.Dropdown(["STTR", "TTR", "RTTR", "CTTR", "Herdan", "Summer", "Dugast", "Maas"], label="Lexical diversity metric", value="STTR", interactive=True)
+            span_size = gr.Textbox(label='Token span width', value=100, visible=True)
+
+            diversity.change(
+                show_sttr_span_textbox, diversity, [span_size]
+            )
         
         button = gr.Button('Submit', variant='primary')
 
@@ -62,7 +76,7 @@ with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as 
             outputs=[zip_out, dep_plot, pos_plot, punct_plot, len_plot]
             ).then( # then run pipeline
                 stylo_app.main, 
-                inputs=[file, lang, readability, diversity], 
+                inputs=[file, lang, readability, diversity, span_size], 
                 outputs=[zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
                 ).then( # then make plots visible
                     visible_plots,
@@ -111,7 +125,7 @@ with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as 
             | Metric | Formula                                         | 
             |--------|-------------------------------------------------|
             | TTR    | Number of unique words / Total number of words |
-            | STTR   | Mean of TTR scores per 100 words |
+            | STTR   | Mean of TTR scores per n words (default=100) |
             | RTTR   | Number of unique words / sqrt(Total number of words) |
             | CTTR   | Number of unique words / sqrt(2 * Total number of words) |
             | Herdan | log(Number of unique words) / log(Total number of words) |

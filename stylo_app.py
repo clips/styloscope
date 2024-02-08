@@ -11,9 +11,9 @@ import numpy as np
 from spacy.matcher import Matcher
 #______________________________________________________________________________________________
 
-def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(track_tqdm=True)):
+def main(fn, lang, readability_metric, diversity_metric, span_size, progress=gr.Progress(track_tqdm=True)):
 
-    progress(0, desc="Starting pipeline...")
+    progress(0, desc="Loading data...")
 
     unique_output_id = str(uuid.uuid4())
     
@@ -164,7 +164,7 @@ def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(tr
         elif diversity_metric == 'CTTR':
             score = util.cttr(n_types, n_tokens) if n_tokens != 0 else None
         elif diversity_metric == 'STTR':
-            score = util.sttr(tokens) if n_tokens != 0 else None
+            score = util.sttr(tokens, int(span_size)) if n_tokens != 0 else None
         elif diversity_metric == 'Herdan':
             score = util.Herdan(n_types, n_tokens) if n_tokens != 0 else None
         elif diversity_metric == 'Summer':
@@ -231,7 +231,7 @@ def main(fn, lang, readability_metric, diversity_metric, progress=gr.Progress(tr
             distribution_dfs[dist_name] = distribution_dfs[dist_name] + [df]
     
 #WRITE RESULTS TO OUTPUT_______________________________________________________________________
-    print("Aggregating data, creating visualizations, and saving raw results...")
+    print("Aggregating results, creating visualizations, and saving raw results...")
     progress(1, desc="Aggregating data. Please wait...")
 
     # length statistics

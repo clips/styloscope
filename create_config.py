@@ -10,6 +10,7 @@ config_object["INPUT_CONFIG"] = {
     "language": 'Dutch', # Dutch, English, French, German
     "readability metric": 'RIX', # ARI, Coleman-Liau, Flesch reading ease, Flesch Kincaid grade level, Gunning Fog, SMOG, LIX, RIX
     "lexical diversity metric": "STTR" # TTR, RTTR, CTTR, STTR, Herdan, Summer, Dugast, Maas
+    "STTR span size": 100, # Span (n tokens) used to compute STTR; irrelevant if other diversity metric is used
 }
 
 config_object["OUTPUT_CONFIG"] = {

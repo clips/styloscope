@@ -120,7 +120,7 @@ Various functions for computing lexical richness scores
 def ttr(n_types,n_tokens):
 	return round(n_types/n_tokens, 3)
 
-def sttr(tokens):
+def sttr(tokens, span_size):
 
 	"""
 	Computes standardized type-token ratio (per 100 tokens).
@@ -130,13 +130,13 @@ def sttr(tokens):
 		STTR score
 	"""
 
-	if len(tokens) < 100:
+	if len(tokens) < span_size:
 		return None
 
 	ttr_scores = []
 
-	for i in range(0, len(tokens), 100):
-		segment = tokens[i:i+100]
+	for i in range(0, len(tokens), span_size):
+		segment = tokens[i:i+span_size]
 		n_types = len(set(segment))
 		n_tokens = len(segment)
 		ttr_scores.append(ttr(n_types, n_tokens))

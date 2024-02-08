@@ -178,7 +178,8 @@ def main():
         elif diversity_metric == 'CTTR':
             score = util.cttr(n_types, n_tokens) if n_tokens != 0 else None
         elif diversity_metric == 'STTR':
-            score = util.sttr(tokens) if n_tokens != 0 else None
+            span_size = int(input_config['STTR span size'])
+            score = util.sttr(tokens, span_size) if n_tokens != 0 else None
         elif diversity_metric == 'Herdan':
             score = util.Herdan(n_types, n_tokens) if n_tokens != 0 else None
         elif diversity_metric == 'Summer':
