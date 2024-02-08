@@ -70,8 +70,8 @@ with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as 
                 )
     
     with gr.Tab("Authorship attribution demo"):
-        gr.load("jenslemmens/xlm_roberta_text_genre_classification_nl", src="models", title="", description="**Text genre prediction**")
-        gr.load("jenslemmens/dutch_gender_classifier", src="models", title="", description="**Gender prediction**")
+        gr.load("clips/xlm-roberta-text-genre-dutch", src="models", title="", description="**Text genre prediction**")
+        gr.load("clips/robbert-2023-dutch-base-gender", src="models", title="", description="**Gender prediction**")
         
     with gr.Tab("User guidelines"):
 
