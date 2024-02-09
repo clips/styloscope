@@ -8,13 +8,8 @@ This repository contains the code to the CLARIAH-VL stylometry analysis pipeline
 3. Clone the respository: ```git clone https://github.com/LemmensJens/CLARIAH-stylo.git```
 4. In this repo's home directory, install requirements with ```pip3 install -r requirements.txt```
 
-### Quick start
-1. Set up the config file.
-2. Run ```python stylo.py```
-
-### Demo
-For an online demo, please visit https://stylene.uantwerpen.be/.
-For a local demo of the pipeline, run ```python get_demo_data.py```, initialize the config file with ```python create_config.py```, and run ```python stylo.py```. The demo data consists of the test partition of the DBRD (Dutch Book Review Dataset).
+### Quick start / demo
+For a demo of the pipeline, set-up and initialize the config file with ```python create_config.py``` using a HuggingFace dataset of your choice (see below), and run ```python stylo.py```.
 
 ### User Interface
 To run the pipeline in a Gradio User Interface, run ```python app.py``` to host the UI locally.
@@ -26,23 +21,38 @@ To run the pipeline in a Gradio User Interface, run ```python app.py``` to host 
 #### Set up the config file
 In ```create_config.py```, set the input and output parameters:
 
-1. ```input```: Full path to the input data
+```input```: Full path to the input data
 
-2. ```input_format```: Format of the input data. Can be either 'csv' for .csv files, or 'zip' for folders that contain .txt files (one per text).
+```input_format```: Format of the input data. Can be either 'csv' for .csv files, or 'zip' for folders that contain .txt files (one per text).
 
-3. ```text_column```: Only relevant if 'input_format' is 'csv'. Refers to the name of the column that contains the text data, default is 'text'.
+```text_column```: Only relevant if 'input_format' is 'csv'. Refers to the name of the column that contains the text data, default is 'text'.
 
-4. ```delimiter```: Only relevant if 'input_format' is 'csv'. Refers to the column delimiter, default is ','.
+```delimiter```: Only relevant if 'input_format' is 'csv'. Refers to the column delimiter, default is ','.
 
-5. ```language```: language of the input data. Default is 'Dutch', other valid options are 'English', 'French', 'German'
+```language```: language of the input data. Default is 'Dutch', other valid options are 'English', 'French', 'German'
 
-6. ```readability metric```: Refers to the metric used to compute readability. Default is 'RIX', other valid options are 'ARI', 'ColemanLiau', 'Flesch', 'FOG', 'Kincaid', 'LIX', 'SMOG'.
+```readability metric```: Refers to the metric used to compute readability. Default is 'RIX', other valid options are 'ARI', 'ColemanLiau', 'Flesch', 'FOG', 'Kincaid', 'LIX', 'SMOG'.
 
-7. ```lexical diversity metric```: Refers to the metric used to compute lexical diversity. Default is "STTR", other valid options are 'TTR', 'RTTR', 'CTTR', 'Herdan', 'Summer', 'Dugast', 'Maas'.
+```lexical diversity metric```: Refers to the metric used to compute lexical diversity. Default is "STTR", other valid options are 'TTR', 'RTTR', 'CTTR', 'Herdan', 'Summer', 'Dugast', 'Maas'.
 
-8. ```output_dir```: folder in which the output of the pipeline is stored
+```STTR span size```: Only relevant if lexical diversity metric = 'STTR'. Refers to the token span width used to computed standardized TTR.
 
-9. ```overwrite_output_dir```: Boolean that decides whether the overwrite the contents of "output_dir" if this folder already exists
+**HuggingFace config**
+(only relevant when specifying ```input_format='huggingface'```)
+
+```dataset_name```: dataset identifier provided on HF
+
+```subset (if applicable)```: subset of interest
+
+```split (if applicable)```: data split of interest
+
+```text_column```: name of the column on which to perform analysis
+
+**Output config**
+
+```output_dir```: folder in which the output of the pipeline is stored
+
+```overwrite_output_dir```: Boolean that decides whether the overwrite the contents of "output_dir" if this folder already exists
 
 #### Run the pipeline
 To run the pipeline, simply use the following command: ```python stylo.py```
@@ -80,7 +90,7 @@ This table contains the formulas and intended usage of the different readability
 | Gunning Fog** | 0.4 * (words / sentences + % complex words) | English;<br />Texts must be > 100 syllables |
 | LIX*** | (words / sentences) + (100 * (long words / words)) | Language-independant |
 | RIX*** | (long words / sentences) + (words / sentences) | Language-independant;<br />More interpretable version of LIX |
-| SMOG** | sqrt(complex words) + 3 | English;<br />Orig. developed for clinical texts);<br />Texts must be > 30 sentences. |
+| SMOG** | sqrt(complex words) + 3 | English;<br />Orig. developed for clinical texts;<br />Texts must be > 30 sentences. |
 
 *L = Average number of characters per 100 tokens<br /> S = Average number of sentences per 100 tokens
 
@@ -94,12 +104,12 @@ The following table contains the formulas of the different lexical richness metr
 | Metric | Formula                                         | 
 |--------|-------------------------------------------------|
 | TTR    | Number of unique words / Total number of words |
-| STTR   | Mean of TTR scores per 100 words |
+| STTR   | Mean of TTR scores per n words (if number of tokens > n else no score) |
 | RTTR   | Number of unique words / sqrt(Total number of words) |
 | CTTR   | Number of unique words / sqrt(2 * Total number of words) |
 | Herdan | log(Number of unique words) / log(Total number of words) |
 | Summer | log( log(Number of unique words) ) / log( log(Total number of words) ) |
-| Dugast | log(Total number of words)**2) / ( log(Total number of words) - log(Number of unique words) ) |
+| Dugast | ( log(Total number of words)**2) / ( log(Total number of words) - log(Number of unique words) ) |
 | Maas   | ( log(Total number of words) - log(Number of unique words) ) / log(Total number of words)**2 |
 
 

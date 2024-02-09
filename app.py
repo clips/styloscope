@@ -57,21 +57,28 @@ with gr.Blocks(title="Stylometric", theme=theme, css=css) as demo:
     with gr.Tab("Pipeline"):
 
         # components
+        with gr.Row():
+            gr.Markdown("### Provide input data")
+
         with gr.Row(variant='panel'):
-            input_type = gr.Radio(choices=['Corpus', 'HuggingFace dataset'], value='Corpus', label='Input type', interactive=True)
+            input_type = gr.Radio(choices=['Corpus', 'HuggingFace dataset'], value='Corpus', label='Type', interactive=True,
+            info="""Upload your own corpus or download a public dataset from the HuggingFace hub""")
        
         with gr.Row(variant='panel'):
             with gr.Column(visible=True) as corpus_input:
                 file = gr.File(file_types = ['.csv', '.zip'], file_count = "single")
             with gr.Column(visible=False) as huggingface_input:
-                dataset = gr.Textbox(label="Dataset name")
-                subset = gr.Textbox(label="Subset (optional)")
-                split = gr.Textbox(label="Split (optional)")
-                column_name = gr.Textbox(label="Column name")
+                dataset = gr.Textbox(label="Name", info="Dataset identifier mentioned on HuggingFace")
+                subset = gr.Textbox(label="Subset", info="Optional")
+                split = gr.Textbox(label="Split", info="Optional")
+                column_name = gr.Textbox(label="Column", info="Column name that will be used for writing style analysis")
 
         input_type.change(
             show_input, input_type, [corpus_input, huggingface_input]
         )
+
+        with gr.Row():
+            gr.Markdown("### Set pipeline parameters")
 
         with gr.Row(variant='panel'):
             lang = gr.Dropdown(["Dutch", "English", "French", "German"], label="Language", value="Dutch", interactive=True)
@@ -114,10 +121,13 @@ with gr.Blocks(title="Stylometric", theme=theme, css=css) as demo:
     with gr.Tab("User guidelines"):
 
         gr.Markdown("""### Input""")
-        gr.Markdown("""The input of the pipeline must be either a .zip folder containing UTF8-encoded .txt files, or a .csv file containing one document per row (this can be a complete text or, if desired, a single sentence). The documents should be placed under a column named "text". Additional columns are allowed and do not affect the pipeline.""")
+        gr.Markdown("""The input of the pipeline must be either a corpus or a publicly available HuggingFace dataset. 
+        Corpora can be uploaded as a .zip folder containing UTF8-encoded .txt files, or as a .csv file containing one document per row (documents must be placed under a column named "text", additional columns are allowed and do not affect the pipeline).
+        When using a HuggingFace dataset, you will be asked to specify the dataset identifier, the text column on which an analysis needs to be performed, and optionally the data subset and split of interest.
+        """)
         
         gr.Markdown("""### Language""")
-        gr.Markdown("""The user must specify the language of the input corpus (Dutch, French, German, English). Note that the tools used in this pipeline have been trained on standard, contemporary language, and will therefore perform best on this type of data. When using a multilingual corpus, it is best to split up the data per language and run the pipeline multiple times while selecting a different language per run.""")
+        gr.Markdown("""The user must specify the language of the input corpus. Our tools currently supports analysis of Dutch, French, English, and German. Note that the tools used in this pipeline have been trained on standard, contemporary language, and will therefore perform best on this type of data. When using a multilingual corpus, it is best to split up the data per language and run the pipeline multiple times while selecting a different language per run.""")
 
         gr.Markdown("""### Readability metrics""")
         gr.Markdown(
@@ -148,12 +158,12 @@ with gr.Blocks(title="Stylometric", theme=theme, css=css) as demo:
             | Metric | Formula                                         | 
             |--------|-------------------------------------------------|
             | TTR    | Number of unique words / Total number of words |
-            | STTR   | Mean of TTR scores per n words (default=100) |
+            | STTR   | Mean of TTR scores per n words (if number of tokens > n else no score) |
             | RTTR   | Number of unique words / sqrt(Total number of words) |
             | CTTR   | Number of unique words / sqrt(2 * Total number of words) |
             | Herdan | log(Number of unique words) / log(Total number of words) |
             | Summer | log( log(Number of unique words) ) / log( log(Total number of words) ) |
-            | Dugast | log(Total number of words)**2) / ( log(Total number of words) - log(Number of unique words) ) |
+            | Dugast | ( log(Total number of words)**2) / ( log(Total number of words) - log(Number of unique words) ) |
             | Maas   | ( log(Total number of words) - log(Number of unique words) ) / log(Total number of words)**2 |
             """
         )
