@@ -26,6 +26,16 @@ theme = gr.themes.Soft(
     block_label_background_fill='*primary_50',
 )
 
+def show_input(input_type):
+    """
+    Used to control which input widget is being shown.
+    """
+    if input_type == "Corpus":
+        return gr.update(visible=True), gr.update(visible=False)
+    else:
+        return gr.update(visible=False), gr.update(visible=True)
+
+
 def show_sttr_span_textbox(metric):
     """
     Used to toggle token span size parameter when STTR is selected as diversity metric.
@@ -41,20 +51,33 @@ def visible_output(input_text):
 def visible_plots(file):
     return gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)
 
-with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as demo:
-    title = gr.Markdown("""# CLARIAH-VL Stylometry Pipeline""")
+with gr.Blocks(title="Stylometric", theme=theme, css=css) as demo:
+    title = gr.Markdown("""# Stylometric""")
     
     with gr.Tab("Pipeline"):
 
         # components
         with gr.Row(variant='panel'):
-            file = gr.File(file_types = ['.csv', '.zip'], file_count = "single")
+            input_type = gr.Radio(choices=['Corpus', 'HuggingFace dataset'], value='Corpus', label='Input type', interactive=True)
+       
+        with gr.Row(variant='panel'):
+            with gr.Column(visible=True) as corpus_input:
+                file = gr.File(file_types = ['.csv', '.zip'], file_count = "single")
+            with gr.Column(visible=False) as huggingface_input:
+                dataset = gr.Textbox(label="Dataset name")
+                subset = gr.Textbox(label="Subset (optional)")
+                split = gr.Textbox(label="Split (optional)")
+                column_name = gr.Textbox(label="Column name")
+
+        input_type.change(
+            show_input, input_type, [corpus_input, huggingface_input]
+        )
 
         with gr.Row(variant='panel'):
             lang = gr.Dropdown(["Dutch", "English", "French", "German"], label="Language", value="Dutch", interactive=True)
             readability = gr.Dropdown(["ARI", "Coleman-Liau", "Flesch reading ease", "Flesch Kincaid grade level", "Gunning Fog", "SMOG", "LIX", "RIX"], label="Readability metric", value="RIX", interactive=True)
             diversity = gr.Dropdown(["STTR", "TTR", "RTTR", "CTTR", "Herdan", "Summer", "Dugast", "Maas"], label="Lexical diversity metric", value="STTR", interactive=True)
-            span_size = gr.Textbox(label='Token span width', value=100, visible=True)
+            span_size = gr.Textbox(label='STTR token span', value=100, visible=True)
 
             diversity.change(
                 show_sttr_span_textbox, diversity, [span_size]
@@ -76,7 +99,7 @@ with gr.Blocks(title="CLARIAH-VL Stylometry Pipeline", theme=theme, css=css) as 
             outputs=[zip_out, dep_plot, pos_plot, punct_plot, len_plot]
             ).then( # then run pipeline
                 stylo_app.main, 
-                inputs=[file, lang, readability, diversity, span_size], 
+                inputs=[input_type, file, dataset, subset, split, column_name, lang, readability, diversity, span_size], 
                 outputs=[zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
                 ).then( # then make plots visible
                     visible_plots,

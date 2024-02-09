@@ -11,17 +11,25 @@ import numpy as np
 from spacy.matcher import Matcher
 #______________________________________________________________________________________________
 
-def main(fn, lang, readability_metric, diversity_metric, span_size, progress=gr.Progress(track_tqdm=True)):
+def main(
+    input_type, 
+    fn, 
+    dataset_name, 
+    subset, 
+    split, 
+    column_name, 
+    lang, 
+    readability_metric, 
+    diversity_metric, 
+    span_size, 
+    progress=gr.Progress(track_tqdm=True)
+    ):
 
     progress(0, desc="Loading data...")
 
     unique_output_id = str(uuid.uuid4())
     
     warnings.simplefilter(action='ignore', category=FutureWarning)
-
-    # if overwrite_output_dir is True, delete the directory
-    # else, check if output dir exists already and return error if it does
-    # create the output directory
 
     # first check if directory where all outputs are stored exists
     main_dir_out = 'outputs'
@@ -36,8 +44,11 @@ def main(fn, lang, readability_metric, diversity_metric, span_size, progress=gr.
     os.mkdir(os.path.join(unique_dir_out, 'visualizations'))
 
 #LOAD_DATA_____________________________________________________________________________________
-    format = 'csv' if fn[-3:] == 'csv' else 'zip'
-    texts, infiles = util.load_data(format, fn, 'text', ',')
+    if input_type == 'Corpus':
+        format = 'csv' if fn[-3:] == 'csv' else 'zip'
+        texts, infiles = util.load_data(format, fn, 'text', ',')
+    else: #Huggingface dataset
+        texts, infiles = util.load_huggingface(dataset_name, subset, split, column_name)
     
 #PREPARE_OUTPUT_DIR____________________________________________________________________________
 

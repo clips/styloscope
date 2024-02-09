@@ -2,9 +2,42 @@ from math import log, sqrt, floor
 from collections import Counter
 from statistics import mean
 from string import punctuation
-import operator, zipfile, os
+import operator, zipfile, os, datasets
+from datasets import load_dataset
+from datasets.utils.logging import disable_progress_bar
 from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
+
+disable_progress_bar()
+
+def load_huggingface(dataset_name, subset, split, column_name):
+	"""
+	Load dataset from the HuggingFace datasets library.
+	Arguments:
+		dataset: dataset name (string),
+		subset: data subset (string),
+		split: data split (string),
+		column_name: name of the column to analyze (string)
+	Returns:
+		texts: list of strings,
+		infiles: doc indices
+	"""
+
+	# Load the dataset
+	dataset = load_dataset(dataset_name) if subset is None else load_dataset(dataset_name, subset)
+
+    # Select the split
+	if split is not None:
+		dataset = dataset[split]
+
+	# Convert to DataFrame
+	df = pd.DataFrame(dataset)
+	
+	# prepare output
+	texts = df[column_name].tolist()
+	infiles = df.index.tolist()
+
+	return texts, infiles
 
 def load_data(input_format, input_dir, text_column=None, delimiter=None):
 

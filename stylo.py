@@ -18,20 +18,36 @@ def main():
     config_object = ConfigParser()
     config_object.read('config.ini')
     input_config = config_object["INPUT_CONFIG"] 
+    huggingface_config = config_object['HUGGINGFACE_CONFIG']
     output_config = config_object["OUTPUT_CONFIG"]
     dir_out = output_config['output_dir']
 
 #LOAD_DATA_____________________________________________________________________________________
     print("Loading data...")
-    text_column = input_config['text_column'] if input_config['input_format'] == 'csv' else None
-    delimiter = input_config['delimiter'] if input_config['input_format'] == 'csv' else None
 
-    texts, infiles = util.load_data(
-        input_config['input_format'],
-        input_config['input'],
-        text_column,
-        delimiter
-        )
+    if input_config['input_format'].lower().strip() in {'csv', 'zip'}:
+        text_column = input_config['text_column'] if input_config['input_format'] == 'csv' else None
+        delimiter = input_config['delimiter'] if input_config['input_format'] == 'csv' else None
+
+        texts, infiles = util.load_data(
+            input_config['input_format'],
+            input_config['input'],
+            text_column,
+            delimiter
+            )
+    elif input_config['input_format'].lower().strip() == 'huggingface':
+        dataset_name = huggingface_config['dataset_name']
+        subset = huggingface_config['subset']
+        split = huggingface_config['split']
+        column_name = huggingface_config['text_column']
+        texts, infiles = util.load_huggingface(
+            dataset_name, 
+            subset, 
+            split, 
+            column_name
+            )
+    else:
+        raise ValueError('Please select one of the following input types: "csv", "zip", or "huggingface"')
     
 #PREPARE_OUTPUT_DIR____________________________________________________________________________
     dir_out = output_config['output_dir']
