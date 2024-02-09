@@ -21,6 +21,8 @@ To run the pipeline in a Gradio User Interface, run ```python app.py``` to host 
 #### Set up the config file
 In ```create_config.py```, set the input and output parameters:
 
+##### Input config
+
 ```input```: Full path to the input data
 
 ```input_format```: Format of the input data. Can be either 'csv' for .csv files, or 'zip' for folders that contain .txt files (one per text).
@@ -37,7 +39,8 @@ In ```create_config.py```, set the input and output parameters:
 
 ```STTR span size```: Only relevant if lexical diversity metric = 'STTR'. Refers to the token span width used to computed standardized TTR.
 
-**HuggingFace config**
+##### HuggingFace config
+
 (only relevant when specifying ```input_format='huggingface'```)
 
 ```dataset_name```: dataset identifier provided on HF
@@ -48,7 +51,7 @@ In ```create_config.py```, set the input and output parameters:
 
 ```text_column```: name of the column on which to perform analysis
 
-**Output config**
+##### Output config
 
 ```output_dir```: folder in which the output of the pipeline is stored
 
