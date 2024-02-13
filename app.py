@@ -51,8 +51,8 @@ def visible_output(input_text):
 def visible_plots(file):
     return gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)
 
-with gr.Blocks(title="Stylometric", theme=theme, css=css) as demo:
-    title = gr.Markdown("""# Stylometric""")
+with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
+    title = gr.Markdown("""# Styloscope""")
     
     with gr.Tab("Pipeline"):
 
