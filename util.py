@@ -23,12 +23,15 @@ def load_huggingface(dataset_name, subset, split, column_name):
 		infiles: doc indices
 	"""
 
-	# Load the dataset
-	dataset = load_dataset(dataset_name) if subset is None else load_dataset(dataset_name, subset)
-
-    # Select the split
-	if split is not None:
-		dataset = dataset[split]
+    # Load dataset
+	if subset.strip() and split.strip():
+		dataset = load_dataset(dataset_name, subset, split=split)
+	elif subset.strip() and not split.strip():
+		dataset = load_dataset(dataset_name, subset)
+	elif not subset.strip() and split.strip():
+		dataset = load_dataset(dataset_name, split=split)
+	else: # not subset.strip() and not split.strip()
+		dataset = load_dataset(dataset_name)
 
 	# Convert to DataFrame
 	df = pd.DataFrame(dataset)

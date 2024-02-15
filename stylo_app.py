@@ -46,7 +46,9 @@ def main(
 #LOAD_DATA_____________________________________________________________________________________
     if input_type == 'Corpus':
         format = 'csv' if fn[-3:] == 'csv' else 'zip'
-        texts, infiles = util.load_data(format, fn, 'text', ',')
+        if format == "zip":
+            column_name = 'text'
+        texts, infiles = util.load_data(format, fn, column_name, ',')
     else: #Huggingface dataset
         texts, infiles = util.load_huggingface(dataset_name, subset, split, column_name)
     

@@ -62,19 +62,22 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
 
         with gr.Row(variant='panel'):
             input_type = gr.Radio(choices=['Corpus', 'HuggingFace dataset'], value='Corpus', label='Type', interactive=True,
-            info="""Upload your own corpus or download a public dataset from the HuggingFace hub""")
+            info="""Upload your own corpus or download a public dataset from the HuggingFace hub.""")
        
         with gr.Row(variant='panel'):
-            with gr.Column(visible=True) as corpus_input:
-                file = gr.File(file_types = ['.csv', '.zip'], file_count = "single")
-            with gr.Column(visible=False) as huggingface_input:
-                dataset = gr.Textbox(label="Name", info="Dataset identifier mentioned on HuggingFace")
-                subset = gr.Textbox(label="Subset", info="Optional")
-                split = gr.Textbox(label="Split", info="Optional")
-                column_name = gr.Textbox(label="Column", info="Column name that will be used for writing style analysis")
+                with gr.Column(visible=True) as corpus_widget:
+                    file = gr.File(file_types = ['.csv', '.zip'], file_count = "single")
+                
+                with gr.Column(visible=False) as hf_widget:
+                    dataset = gr.Textbox(label="Name", info="Dataset identifier mentioned on HuggingFace.")
+                    subset = gr.Textbox(label="Subset", info="Optional")
+                    split = gr.Textbox(label="Split", info="Optional")
+
+        with gr.Row(variant='panel'):
+            column_name = gr.Textbox(label="Column", info="Column name (for .csv / Huggingface) that will be used for writing style analysis.")
 
         input_type.change(
-            show_input, input_type, [corpus_input, huggingface_input]
+            show_input, input_type, [corpus_widget, hf_widget]
         )
 
         with gr.Row():
