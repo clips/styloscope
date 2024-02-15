@@ -3,11 +3,11 @@ from configparser import ConfigParser
 config_object = ConfigParser()
 
 config_object["INPUT_CONFIG"] = {
-    "input": 'demo/demo_data.csv', #.csv file or path to zip folder
-    "input_format": 'csv', # 'csv', 'zip' or 'huggingface'
-    "text_column": 'text', #only relevant if input_format==csv
+    "input": '', #.csv file or path to zip folder
+    "input_format": '', # 'csv', 'zip' or 'huggingface'
+    "text_column": '', #only relevant if input_format==csv
     "delimiter": ',', #only relevant if input_format==csv
-    "language": 'English', # Dutch, English, French, German
+    "language": '', # Dutch, English, French, German
     "readability metric": 'RIX', # ARI, Coleman-Liau, Flesch reading ease, Flesch Kincaid grade level, Gunning Fog, SMOG, LIX, RIX
     "lexical diversity metric": "STTR", # TTR, RTTR, CTTR, STTR, Herdan, Summer, Dugast, Maas
     "STTR span size": 100, # Span (n tokens) used to compute STTR; irrelevant if other diversity metric is used
@@ -21,7 +21,7 @@ config_object['HUGGINGFACE_CONFIG'] = {
 }
 
 config_object["OUTPUT_CONFIG"] = {
-    "output_dir": 'demo/output', # directory to the output folder
+    "output_dir": 'output', # directory to the output folder
     "overwrite_output_dir": '1' # 1 or 0
 }
 
