@@ -63,7 +63,7 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
         with gr.Row(variant='panel'):
             input_type = gr.Radio(choices=['Corpus', 'HuggingFace dataset'], value='Corpus', label='Type', interactive=True,
             info="""Upload your own corpus or download a public dataset from the HuggingFace hub.""")
-       
+    
         with gr.Row(variant='panel'):
                 with gr.Column(visible=True) as corpus_widget:
                     file = gr.File(file_types = ['.csv', '.zip'], file_count = "single")
@@ -184,5 +184,4 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
         gr.Markdown("""<center><img src="https://platformdh.uantwerpen.be/wp-content/uploads/2019/03/clariah_def.png" alt="Image" width="200"/></center>""")
         gr.Markdown("""<center><img src="https://thomasmore.be/sites/default/files/2022-11/UA-hor-1-nl-rgb.jpg" alt="Image" width="175"/></center>""")
 
-
-demo.queue(default_concurrency_limit=10).launch(share=False)
+demo.launch(server_port=7860, share=False, server_name='0.0.0.0')
