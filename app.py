@@ -49,7 +49,7 @@ def send_mail(receiver, run_id):
 
     # attach output
     with open(f'./outputs/{run_id}.zip', 'rb') as file:
-      msg.attach(MIMEApplication(file.read(), Name='filename.zip'))
+      msg.attach(MIMEApplication(file.read(), Name=f'{run_id}.zip'))
       text = msg.as_string()
 
     # set up mailing server
@@ -141,7 +141,7 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
         button = gr.Button('Submit', variant='primary')
 
         # outputs
-        run_id = gr.Textbox(label='Run index', visible=False, interactive=False)
+        run_id = gr.Textbox(label='Run index', info="", visible=False, interactive=False)
         zip_out = gr.File(label='Output', visible=False)
         basic_statistics = gr.Dataframe(headers=['Corpus statistics', 'Mean', 'Std.'], visible=False)
         dep_plot = gr.Plot(label='Distribution of syntactic dependencies', show_label=True, visible=False)
