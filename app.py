@@ -31,6 +31,13 @@ theme = gr.themes.Soft(
     block_label_background_fill='*primary_50',
 )
 
+def set_visibility():
+    """
+    Sets the visibility of the output widgets to False
+    when initiating a new run.
+    """
+    return gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
+
 def send_mail(receiver, run_id):
   
   """Sends email with pipeline output attached to user."""
@@ -149,25 +156,28 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
         punct_plot = gr.Plot(label='Distribution of punctuation marks', show_label=True, visible=False)
         len_plot = gr.Plot(label='Distribution of word lengths', show_label=True, visible=False)
 
-        button.click( # first generate run index
-            generate_run_id,
-            outputs=run_id,
-        ).then( # then make zip output component visible (so that progress bar is visible)
-            visible_output, 
-            inputs=file, 
-            outputs=[zip_out, dep_plot, pos_plot, punct_plot, len_plot]
-            ).then( # then run pipeline
-                stylo_app.main, 
-                inputs=[input_type, file, dataset, subset, split, column_name, lang, readability, diversity, span_size, run_id], 
-                outputs=[zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
-                ).then( # then make plots visible
-                    visible_plots,
-                    inputs=file,
-                    outputs=[basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
-                    ).then(
-                        send_mail,
-                        inputs=[receiver, run_id]
-                    )
+        button.click( # first set visibility of the widgets
+            set_visibility,
+            outputs=[run_id, zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot],
+            ).then( # then generate and show run index
+                generate_run_id,
+                outputs=run_id,
+                ).then( # then make zip output component visible (so that progress bar is visible)
+                    visible_output, 
+                    inputs=file, 
+                    outputs=[zip_out, dep_plot, pos_plot, punct_plot, len_plot]
+                    ).then( # then run pipeline
+                        stylo_app.main, 
+                        inputs=[input_type, file, dataset, subset, split, column_name, lang, readability, diversity, span_size, run_id], 
+                        outputs=[zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
+                        ).then( # then make plots visible
+                            visible_plots,
+                            inputs=file,
+                            outputs=[basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
+                            ).then(
+                                send_mail,
+                                inputs=[receiver, run_id]
+                            )
     
     with gr.Tab("Authorship attribution demo"):
         gr.load("clips/xlm-roberta-text-genre-dutch", src="models", title="", description="**Text genre prediction**")
