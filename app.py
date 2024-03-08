@@ -135,7 +135,9 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
                 show_sttr_span_textbox, diversity, [span_size]
             )
         
-        receiver = gr.Textbox(label='E-mail', info="Provide your e-mail address if you want to receive the output in your mailbox.")
+        with gr.Row(variant="panel"):
+            receiver = gr.Textbox(label='E-mail', info="Please provide your e-mail address to receive the output in your mailbox (optional). Personal info will not be saved or used for any other purpose than this application.")
+        
         button = gr.Button('Submit', variant='primary')
 
         # outputs
