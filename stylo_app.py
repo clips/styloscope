@@ -22,13 +22,11 @@ def main(
     readability_metric, 
     diversity_metric, 
     span_size, 
-    progress=gr.Progress(track_tqdm=True)
+    unique_output_id,
+    progress=gr.Progress(track_tqdm=True),
     ):
 
-    progress(0, desc="Loading data...")
-
-    unique_output_id = str(uuid.uuid4())
-    
+    progress(0, desc="Loading data...")    
     warnings.simplefilter(action='ignore', category=FutureWarning)
 
     # first check if directory where all outputs are stored exists

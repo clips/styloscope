@@ -1,6 +1,11 @@
 import gradio as gr
-import pandas as pd
+import uuid, os
 import stylo_app
+
+import smtplib 
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 
 css = """
 h1 {
@@ -25,6 +30,43 @@ theme = gr.themes.Soft(
     button_primary_background_fill_hover='*secondary_400',
     block_label_background_fill='*primary_50',
 )
+
+def send_mail(receiver, run_id):
+  
+  """Sends email with pipeline output attached to user."""
+
+  if receiver.strip(): #check if user actually wants to receive output
+
+    # specify header
+    msg = MIMEMultipart()
+    msg['From'] = 'styloscope.ua@gmail.com'
+    msg['To'] = receiver.strip()
+    msg['Subject'] = f'Output {run_id}'
+
+    # add body of message
+    body = f'Dear Styloscope user,\n\nAttached you can find the output of run {run_id}.\n\nKind regards.'
+    msg.attach(MIMEText(body, 'plain'))
+
+    # attach output
+    with open(f'./outputs/{run_id}.zip', 'rb') as file:
+      msg.attach(MIMEApplication(file.read(), Name='filename.zip'))
+      text = msg.as_string()
+
+    # set up mailing server
+    path = '/var/www/CLARIAH-stylo/app_password.txt' 
+    if os.path.exists(path):
+        with open(path) as f:
+            app_password = f.read()
+
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login('styloscope.ua@gmail.com', app_password)
+        server.sendmail('styloscope.ua@gmail.com', receiver, text)
+        server.quit()
+
+def generate_run_id():
+    run_id = str(uuid.uuid4())
+    return gr.update(value=run_id, visible=True)
 
 def show_input(input_type):
     """
@@ -93,9 +135,11 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
                 show_sttr_span_textbox, diversity, [span_size]
             )
         
+        receiver = gr.Textbox(label='E-mail', info="Provide your e-mail address if you want to receive the output in your mailbox.")
         button = gr.Button('Submit', variant='primary')
 
         # outputs
+        run_id = gr.Textbox(label='Run index', visible=False, interactive=False)
         zip_out = gr.File(label='Output', visible=False)
         basic_statistics = gr.Dataframe(headers=['Corpus statistics', 'Mean', 'Std.'], visible=False)
         dep_plot = gr.Plot(label='Distribution of syntactic dependencies', show_label=True, visible=False)
@@ -103,19 +147,25 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
         punct_plot = gr.Plot(label='Distribution of punctuation marks', show_label=True, visible=False)
         len_plot = gr.Plot(label='Distribution of word lengths', show_label=True, visible=False)
 
-        button.click( # first make zip output component visible (so that progress bar is visible)
+        button.click( # first generate run index
+            generate_run_id,
+            outputs=run_id,
+        ).then( # then make zip output component visible (so that progress bar is visible)
             visible_output, 
             inputs=file, 
             outputs=[zip_out, dep_plot, pos_plot, punct_plot, len_plot]
             ).then( # then run pipeline
                 stylo_app.main, 
-                inputs=[input_type, file, dataset, subset, split, column_name, lang, readability, diversity, span_size], 
+                inputs=[input_type, file, dataset, subset, split, column_name, lang, readability, diversity, span_size, run_id], 
                 outputs=[zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
                 ).then( # then make plots visible
                     visible_plots,
                     inputs=file,
                     outputs=[basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
-                )
+                    ).then(
+                        send_mail,
+                        inputs=[receiver, run_id]
+                    )
     
     with gr.Tab("Authorship attribution demo"):
         gr.load("clips/xlm-roberta-text-genre-dutch", src="models", title="", description="**Text genre prediction**")
