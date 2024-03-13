@@ -119,8 +119,8 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
                 
                 with gr.Column(visible=False) as hf_widget:
                     dataset = gr.Textbox(label="Name", info="Dataset identifier mentioned on HuggingFace.")
-                    subset = gr.Textbox(label="Subset", info="Optional")
-                    split = gr.Textbox(label="Split", info="Optional")
+                    subset = gr.Textbox(label="Subset", info="Mandatory if dataset contains subsets.")
+                    split = gr.Textbox(label="Split", info="Mandatory if dataset contains splits.")
 
         with gr.Row(variant='panel'):
             column_name = gr.Textbox(label="Column", info="Column name (for .csv / Huggingface) that will be used for writing style analysis.")
@@ -146,6 +146,7 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
             receiver = gr.Textbox(label='E-mail', info="Please provide your e-mail address to receive the output in your mailbox (optional). Personal info will not be saved or used for any other purpose than this application.")
         
         button = gr.Button('Submit', variant='primary')
+        cancel_button = gr.Button('Cancel', variant='primary')
 
         # outputs
         run_id = gr.Textbox(label='Run index', info="", visible=False, interactive=False)
@@ -247,4 +248,5 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
         gr.Markdown("""<center><img src="https://platformdh.uantwerpen.be/wp-content/uploads/2019/03/clariah_def.png" alt="Image" width="200"/></center>""")
         gr.Markdown("""<center><img src="https://thomasmore.be/sites/default/files/2022-11/UA-hor-1-nl-rgb.jpg" alt="Image" width="175"/></center>""")
 
+demo.queue(default_concurrency_limit=10)
 demo.launch(server_port=7860, share=False, server_name='0.0.0.0')
