@@ -146,7 +146,6 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
             receiver = gr.Textbox(label='E-mail', info="Please provide your e-mail address to receive the output in your mailbox (optional). Personal info will not be saved or used for any other purpose than this application.")
         
         button = gr.Button('Submit', variant='primary')
-        cancel_button = gr.Button('Cancel', variant='primary')
 
         # outputs
         run_id = gr.Textbox(label='Run index', info="", visible=False, interactive=False)
