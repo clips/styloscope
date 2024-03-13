@@ -159,6 +159,7 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
         button.click( # first set visibility of the widgets
             set_visibility,
             outputs=[run_id, zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot],
+            trigger_mode="once",
             ).then( # then generate and show run index
                 generate_run_id,
                 outputs=run_id,
