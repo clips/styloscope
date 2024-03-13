@@ -90,7 +90,7 @@ def main(
     ]
     matcher = Matcher(nlp.vocab)  
     matcher.add('Passive',  passive_rules)
-  
+
     print("Processing data...")
     for text in progress.tqdm(texts, unit='documents processed'): # Analyze text by text
 
