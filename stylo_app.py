@@ -46,6 +46,9 @@ def main(
         format = 'csv' if fn[-3:] == 'csv' else 'zip'
         if format == "zip":
             column_name = 'text'
+        file_size = os.path.getsize(fn.name)
+        assert file_size < 1000000000 # ensure uploaded corpus is smaller than 1GB
+        print(file_size)
         texts, infiles = util.load_data(format, fn, column_name, ',')
     else: #Huggingface dataset
         texts, infiles = util.load_huggingface(dataset_name, subset, split, column_name)
