@@ -21,6 +21,12 @@ h1 {
 	overflow: hidden;
 	width: 70%;
 }
+#submit-button:hover {
+    background-color: blue !important; /* Force red background on hover */
+}
+#cancel-button:hover {
+    background-color: red !important; /* Force red background on hover */
+}
 """
 theme = gr.themes.Soft(
     primary_hue="indigo",
@@ -36,13 +42,13 @@ def set_visibility():
     Sets the visibility of the output widgets to False
     when initiating a new run.
     """
-    return gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
+    return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
 
-def send_mail(receiver, run_id):
+def send_mail(receiver, run_id, error_or_canceled):
   
   """Sends email with pipeline output attached to user."""
-
-  if receiver.strip(): #check if user actually wants to receive output
+  #check if user actually wants to receive output and if no error occured or operation has not been canceled
+  if receiver.strip() and not bool(error_or_canceled.value): 
 
     # specify header
     msg = MIMEMultipart()
@@ -84,7 +90,6 @@ def show_input(input_type):
     else:
         return gr.update(visible=False), gr.update(visible=True)
 
-
 def show_sttr_span_textbox(metric):
     """
     Used to toggle token span size parameter when STTR is selected as diversity metric.
@@ -94,12 +99,16 @@ def show_sttr_span_textbox(metric):
     else: 
         return gr.update(visible=False)
 
-def visible_output(input_text):
+def visible_output():
     return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
 
-def visible_plots(file):
-    return gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True)
+def visible_plots(error_or_canceled):
 
+    if bool(error_or_canceled):
+        return gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
+    else:
+        return gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)
+    
 with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
     title = gr.Markdown("""# Styloscope""")
     
@@ -145,7 +154,8 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
         with gr.Row(variant="panel"):
             receiver = gr.Textbox(label='E-mail', info="Please provide your e-mail address to receive the output in your mailbox (optional). Personal info will not be saved or used for any other purpose than this application.")
         
-        button = gr.Button('Submit', variant='primary')
+        with gr.Row(variant="Panel"):
+            button = gr.Button('Submit', variant='primary')
 
         # outputs
         run_id = gr.Textbox(label='Run index', info="", visible=False, interactive=False)
@@ -156,29 +166,43 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
         punct_plot = gr.Plot(label='Distribution of punctuation marks', show_label=True, visible=False)
         len_plot = gr.Plot(label='Distribution of word lengths', show_label=True, visible=False)
 
-        button.click( # first set visibility of the widgets
+        error_or_canceled = gr.Textbox(value="False", interactive=True, visible=False) 
+        # flag that keeps track of whether there was an error or cancel instruction
+        # used to regulate visibility of widgets
+        # must be a gradio component since used as input in function triggered by button click
+
+        with gr.Row(variant="Panel"):
+            cancel_button = gr.Button('Cancel', variant='primary', elem_id='cancel-button', visible=False, interactive=True)
+
+        visibility_event = button.click( # first set visibility of the widgets
             set_visibility,
-            outputs=[run_id, zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot],
+            outputs=[cancel_button, run_id, zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot],
             trigger_mode="once",
-            ).then( # then generate and show run index
-                generate_run_id,
-                outputs=run_id,
-                ).then( # then make zip output component visible (so that progress bar is visible)
-                    visible_output, 
-                    inputs=file, 
-                    outputs=[zip_out, dep_plot, pos_plot, punct_plot, len_plot]
-                    ).then( # then run pipeline
-                        stylo_app.main, 
-                        inputs=[input_type, file, dataset, subset, split, column_name, lang, readability, diversity, span_size, run_id], 
-                        outputs=[zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
-                        ).then( # then make plots visible
-                            visible_plots,
-                            inputs=file,
-                            outputs=[basic_statistics, dep_plot, pos_plot, punct_plot, len_plot]
-                            ).then(
-                                send_mail,
-                                inputs=[receiver, run_id]
-                            )
+            )
+        id_event = visibility_event.then( # then generate and show run index
+            generate_run_id,
+            outputs=run_id,
+            )
+        output_event = id_event.then( # then make zip output component visible (so that progress bar is visible)
+            visible_output, 
+            outputs=[zip_out, dep_plot, pos_plot, punct_plot, len_plot]
+            )
+        pipe_event = output_event.then( # then run pipeline
+            stylo_app.main, 
+            inputs=[input_type, file, dataset, subset, split, column_name, lang, readability, diversity, span_size, run_id], 
+            outputs=[zip_out, basic_statistics, dep_plot, pos_plot, punct_plot, len_plot, error_or_canceled]
+            )  
+        plots_event = pipe_event.then( # then make plots visible
+            visible_plots,
+            inputs=[error_or_canceled],
+            outputs=[basic_statistics, dep_plot, pos_plot, punct_plot, len_plot, run_id, cancel_button]
+            )
+        mail_event = plots_event.then( # finally send mail with output
+            send_mail,
+            inputs=[receiver, run_id, error_or_canceled]
+            )
+                
+        cancel_button.click(stylo_app.stop_function, outputs=[cancel_button, run_id])
     
     with gr.Tab("Authorship attribution demo"):
         gr.load("clips/xlm-roberta-text-genre-dutch", src="models", title="", description="**Text genre prediction**")

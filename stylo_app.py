@@ -1,15 +1,23 @@
-import os, shutil, io, zipfile
+import os, shutil
 import util, visualizations, warnings
-from configparser import ConfigParser
 from statistics import mean, stdev
-from tqdm import tqdm
 
 import pandas as pd
 import gradio as gr
-import spacy, pyphen, uuid
-import numpy as np
+import spacy, pyphen
 from spacy.matcher import Matcher
+import numpy as np
 #______________________________________________________________________________________________
+stop_que = False
+
+def stop_function():
+    """
+    Changes flag used to track whether to stop the pipeline to True.
+    """
+    global stop_que
+    stop_que = True
+    print("Process cancelled by user!")
+    return gr.update(visible=False), gr.update(visible=False)
 
 def main(
     input_type, 
@@ -23,8 +31,11 @@ def main(
     diversity_metric, 
     span_size, 
     unique_output_id,
+    error_or_canceled=True,
     progress=gr.Progress(track_tqdm=True),
     ):
+
+    global stop_que # flag for tracking if cancel button has been pressed
 
     progress(0, desc="Loading data...")    
     warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -41,6 +52,18 @@ def main(
     os.mkdir(unique_dir_out)
     os.mkdir(os.path.join(unique_dir_out, 'visualizations'))
 
+    if stop_que:
+        stop_que = False
+        return (
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            error_or_canceled,
+        )
+
 #LOAD_DATA_____________________________________________________________________________________
     if input_type == 'Corpus':
         format = 'csv' if fn[-3:] == 'csv' else 'zip'
@@ -52,6 +75,18 @@ def main(
         texts, infiles = util.load_data(format, fn, column_name, ',')
     else: #Huggingface dataset
         texts, infiles = util.load_huggingface(dataset_name, subset, split, column_name)
+
+    if stop_que:
+        stop_que = False
+        return (
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            gr.update(visible=False),
+            error_or_canceled
+        )
     
 #PREPARE_OUTPUT_DIR____________________________________________________________________________
 
@@ -95,7 +130,20 @@ def main(
     matcher.add('Passive',  passive_rules)
 
     print("Processing data...")
+
     for text in progress.tqdm(texts, unit='documents processed'): # Analyze text by text
+        if stop_que:
+            stop_que = False
+            return (
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                error_or_canceled
+            )
+
 
         # check if text is empty
         if not text.strip():
@@ -359,6 +407,7 @@ def main(
     })
 
     progress(1, desc="Done!")
+    error_or_canceled='' # False when cast to boolean
 
     return (
         shutil.make_archive(base_name=os.path.join(unique_dir_out), format='zip', base_dir=unique_dir_out),
@@ -367,4 +416,5 @@ def main(
         pos_plot,
         punct_plot,
         len_plot,
+        error_or_canceled
     )
