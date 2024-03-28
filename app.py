@@ -48,8 +48,7 @@ def send_mail(receiver, run_id, error_or_canceled):
   
   """Sends email with pipeline output attached to user."""
   #check if user actually wants to receive output and if no error occured or operation has not been canceled
-  if receiver.strip() and not bool(error_or_canceled.value): 
-
+  if receiver.strip() and not bool(error_or_canceled): 
     # specify header
     msg = MIMEMultipart()
     msg['From'] = 'styloscope.ua@gmail.com'
