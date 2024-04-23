@@ -9,35 +9,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
 
 import smtplib 
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 disable_progress_bar()
-
-def send_mail(receiver, zip_out, fn, run_id):
-
-	"""Sends email with pipeline output attached to user."""
-
-	msg = MIMEMultipart()
-	msg['From'] = 'styloscope.ua@gmail.com'
-	msg['To'] = receiver.strip()
-	msg['Subject'] = f'Output {run_id}'
-    
-	body = f'Dear Styloscope user,\n\nAttached you can find the output of run {run_id}.\n\nKind regards.'
-
-	msg.attach(MIMEText(body, 'plain'))
-	msg.add_attachment(zip_out, maintype='application', subtype='zip', filename=fn)
-
-	text = msg.as_string()
-
-	with open('app_password.txt') as f:
-		app_password = f.read()
-    
-	server = smtplib.SMTP('smtp.gmail.com', 587)
-	server.starttls()
-	server.login('styloscope.ua@gmail.com', app_password)
-	server.sendmail('styloscope.ua@gmail.com', receiver, text)
-	server.quit()
 
 def load_huggingface(dataset_name, subset, split, column_name):
 	"""

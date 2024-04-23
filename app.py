@@ -44,38 +44,6 @@ def set_visibility():
     """
     return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
 
-def send_mail(receiver, run_id, error_or_canceled):
-  
-  """Sends email with pipeline output attached to user."""
-  #check if user actually wants to receive output and if no error occured or operation has not been canceled
-  if receiver.strip() and not bool(error_or_canceled): 
-    # specify header
-    msg = MIMEMultipart()
-    msg['From'] = 'styloscope.ua@gmail.com'
-    msg['To'] = receiver.strip()
-    msg['Subject'] = f'Output {run_id}'
-
-    # add body of message
-    body = f'Dear Styloscope user,\n\nAttached you can find the output of run {run_id}.\n\nKind regards.'
-    msg.attach(MIMEText(body, 'plain'))
-
-    # attach output
-    with open(f'./outputs/{run_id}.zip', 'rb') as file:
-      msg.attach(MIMEApplication(file.read(), Name=f'{run_id}.zip'))
-      text = msg.as_string()
-
-    # set up mailing server
-    path = '/var/www/CLARIAH-stylo/app_password.txt' 
-    if os.path.exists(path):
-        with open(path) as f:
-            app_password = f.read()
-
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login('styloscope.ua@gmail.com', app_password)
-        server.sendmail('styloscope.ua@gmail.com', receiver, text)
-        server.quit()
-
 def generate_run_id():
     run_id = str(uuid.uuid4())
     return gr.update(value=run_id, visible=True)
@@ -149,10 +117,7 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
             diversity.change(
                 show_sttr_span_textbox, diversity, [span_size]
             )
-        
-        with gr.Row(variant="panel"):
-            receiver = gr.Textbox(label='E-mail', info="Please provide your e-mail address to receive the output in your mailbox (optional). Personal info will not be saved or used for any other purpose than this application.")
-        
+          
         with gr.Row(variant="Panel"):
             button = gr.Button('Submit', variant='primary')
 
@@ -195,10 +160,6 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
             visible_plots,
             inputs=[error_or_canceled],
             outputs=[basic_statistics, dep_plot, pos_plot, punct_plot, len_plot, run_id, cancel_button]
-            )
-        mail_event = plots_event.then( # finally send mail with output
-            send_mail,
-            inputs=[receiver, run_id, error_or_canceled]
             )
                 
         cancel_button.click(stylo_app.stop_function, outputs=[cancel_button, run_id])
