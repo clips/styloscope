@@ -169,7 +169,9 @@ def sttr(tokens, span_size):
 	"""
 
 	if len(tokens) < span_size:
-		return None
+		n_tokens = len(tokens)
+		n_types = len(set(tokens))
+		return round(n_types/n_tokens, 3)
 
 	ttr_scores = []
 

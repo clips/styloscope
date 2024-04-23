@@ -208,7 +208,7 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
             | Metric | Formula                                         | 
             |--------|-------------------------------------------------|
             | TTR    | Number of unique words / Total number of words |
-            | STTR   | Mean of TTR scores per n words (if number of tokens > n else no score) |
+            | STTR   | Mean of TTR scores per n words (returns TTR if text < n words) |
             | RTTR   | Number of unique words / sqrt(Total number of words) |
             | CTTR   | Number of unique words / sqrt(2 * Total number of words) |
             | Herdan | log(Number of unique words) / log(Total number of words) |
