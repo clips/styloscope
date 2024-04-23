@@ -10,13 +10,18 @@ def prepare_df(input_df, task_name, lang):
     """
     #load and concatenate reference statistics
     if lang == 'Dutch':
-        reference_df = pd.read_csv(f'reference_corpora/{task_name}_combined.csv')
+        reference_df = pd.read_csv(f'reference_corpora/nl/{task_name}_combined.csv')
+    elif lang == 'English':
+        reference_df = pd.read_csv(f'reference_corpora/en/{task_name}_combined.csv')
+    elif lang == 'German':
+        reference_df = pd.read_csv(f'reference_corpora/de/{task_name}_combined.csv')
+    else:
+        reference_df = pd.read_csv(f'reference_corpora/fr/{task_name}_combined.csv')
+        
         if task_name == 'word_length_distribution':
             reference_df.columns = [int(col) if col not in {"source", "doc"} else col for col in reference_df.columns]
             input_df.columns = [int(col) if col not in {"source", "doc"} else col for col in input_df.columns]
         df = pd.concat([input_df, reference_df]).fillna(0)
-    else:
-        df = input_df.fillna(0)
     
     #get df with only mean statistics
     mean_df = df[df['doc']=='mean']
