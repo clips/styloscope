@@ -21,15 +21,16 @@ def prepare_df(input_df, task_name, lang):
         if task_name == 'word_length_distribution':
             reference_df.columns = [int(col) if col not in {"source", "doc"} else col for col in reference_df.columns]
             input_df.columns = [int(col) if col not in {"source", "doc"} else col for col in input_df.columns]
-        df = pd.concat([input_df, reference_df]).fillna(0)
+    
+    reference_df = pd.concat([input_df, reference_df]).fillna(0)
     
     #get df with only mean statistics
-    mean_df = df[df['doc']=='mean']
+    mean_df = reference_df[reference_df['doc']=='mean']
     mean_df.drop(columns=['doc'], inplace=True)
     mean_df.set_index('source', inplace=True)
 
     #get df with only std statistics
-    std_df = df[df['doc']=='std']
+    std_df = reference_df[reference_df['doc']=='std']
     std_df.drop(columns=['doc'], inplace=True)
     std_df.set_index('source', inplace=True)
 
@@ -45,20 +46,6 @@ def generate_bar_chart(mean_df, std_df, savename, output_dir):
     Returns:
         None
     """
-
-    task_to_title = {
-        'word_length_distribution': 'Frequency distribution of of the Word Lengths',
-        'dependency_profile': 'Frequency Distribution of the Syntactic Dependencies',
-        'punctuation_distribution': 'Frequency Distribution of the Punctuation Marks',
-        'pos_profile': 'Frequency Distribution of the Part-of-Speech Tags',
-    }
-
-    task_to_feature = {
-        'word_length_distribution': 'number of characters',
-        'dependency_profile': 'syntactic dependency',
-        'punctuation_distribution': 'punctuation mark',
-        'pos_profile': 'part-of-speech tag',
-    }
 
     if savename == 'word_length_distribution': # remove columns of word length 26 and up which is usually noise and completely distorts the visualization
         filtered_columns = [col for col in mean_df.columns if type(col) == int and col < 24]
