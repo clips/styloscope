@@ -12,7 +12,7 @@ This repository contains the code to the CLARIAH-VL stylometry analysis pipeline
 For a demo of the pipeline, set-up and initialize the config file with ```python create_config.py``` using a HuggingFace dataset of your choice (see below), and run ```python stylo.py```.
 
 ### User Interface
-To run the pipeline in a Gradio User Interface, run ```python app.py``` to host the UI locally.
+To run the pipeline in a Gradio User Interface, run ```python app.py``` to host the UI locally. When running the UI on a remote server, connecting to the host with ssh will allow you to access the interface on your machine through the same url.
 
 ### Pipeline overview
 
