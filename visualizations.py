@@ -15,12 +15,14 @@ def prepare_df(input_df, task_name, lang):
         reference_df = pd.read_csv(f'reference_corpora/en/{task_name}_combined.csv')
     elif lang == 'German':
         reference_df = pd.read_csv(f'reference_corpora/de/{task_name}_combined.csv')
-    else:
+    elif lang == 'French':
         reference_df = pd.read_csv(f'reference_corpora/fr/{task_name}_combined.csv')
+    else:
+        raise ValueError('Language must be one of the following: "Dutch", "English", "German", "French".')
         
-        if task_name == 'word_length_distribution':
-            reference_df.columns = [int(col) if col not in {"source", "doc"} else col for col in reference_df.columns]
-            input_df.columns = [int(col) if col not in {"source", "doc"} else col for col in input_df.columns]
+    if task_name == 'word_length_distribution':
+        reference_df.columns = [int(col) if col not in {"source", "doc"} else col for col in reference_df.columns]
+        input_df.columns = [int(col) if col not in {"source", "doc"} else col for col in input_df.columns]
     
     reference_df = pd.concat([input_df, reference_df]).fillna(0)
     
