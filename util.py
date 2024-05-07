@@ -93,6 +93,7 @@ def get_n_syllables(word, dic):
 	Syllabification based on Pyphen library.
 	Arguments:
 		word: str
+		dic: pyphen instance
 	Returns:
 		n_syllables: int
 	"""  
@@ -100,23 +101,23 @@ def get_n_syllables(word, dic):
 	return len(result)
 
 #STATISTICS__________________________________________________________________________
-def contains_negation(tokenized_sentence, negators={'niet', 'niets', 'geen', 'nooit', 'niemand', 'nergens', 'noch'}):
-	"""
-	Detects negation in a sentence
-	Arguments
-		tokenized_sentence: list of tokens
-		negators: lexicon indicating negation
-	Returns
-		Bool
-	"""
-	for n in negators:
-		if n in set(t.lower() for t in tokenized_sentence):
-			return True
-	return False
+# def contains_negation(tokenized_sentence, negators={'niet', 'niets', 'geen', 'nooit', 'niemand', 'nergens', 'noch'}):
+# 	"""
+# 	Detects negation in a sentence
+# 	Arguments
+# 		tokenized_sentence: list of tokens
+# 		negators: lexicon indicating negation
+# 	Returns
+# 		Bool
+# 	"""
+# 	for n in negators:
+# 		if n in set(t.lower() for t in tokenized_sentence):
+# 			return True
+# 	return False
 
 def ratio_content_words(doc):
 	"""
-	Computes ratio of content words (PUNCT, SYM, and X are excluded in this computation)
+	Computes ratio of content words to all words (PUNCT, SYM, and X are excluded in this computation)
 	Arguments:
 		doc: Spacy doc object
 	Returns
@@ -156,6 +157,16 @@ Various functions for computing lexical richness scores
 """
 
 def ttr(n_types,n_tokens):
+
+	"""
+	Computes type-token ratio.
+	Input:
+		n_types: number of unique words
+		n_tokens: number of words
+	Returns:
+		TTR
+	"""
+
 	return round(n_types/n_tokens, 3)
 
 def sttr(tokens, span_size):
@@ -164,8 +175,9 @@ def sttr(tokens, span_size):
 	Computes standardized type-token ratio (per 100 tokens).
 	Input:
 		tokens: list of tokens
+		span_size: size of the segments on which TTR is computed.
 	Returns:
-		STTR score
+		STTR if len(tokens) > span_size, else TTR
 	"""
 
 	if len(tokens) < span_size:
@@ -182,6 +194,11 @@ def sttr(tokens, span_size):
 		ttr_scores.append(ttr(n_types, n_tokens))
 	
 	return round(mean(ttr_scores), 3)
+
+"""
+Following functions are variations on TTR, 
+but all based on number of types and tokens.
+"""
 
 def rttr(n_types,n_tokens):
 	return round(n_types/sqrt(n_tokens), 3)
@@ -374,7 +391,7 @@ def get_word_length_distribution(tokens):
 	"""
 	Compute word length distribution
 	Arguments:
-		tokens: lst
+		tokens: list
 	Returns:
 		{token_length: rel_freq}
 	"""
@@ -388,7 +405,7 @@ def get_dependency_distribution(dependencies):
 	"""
 	Compute dependency distribution
 	Arguments:
-		dependencies: lst
+		dependencies: list
 	Returns:
 		{dependency: rel_freq}
 	"""

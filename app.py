@@ -164,7 +164,7 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
                 
         cancel_button.click(stylo_app.stop_function, outputs=[cancel_button, run_id])
     
-    with gr.Tab("Authorship attribution demo"):
+    with gr.Tab("Dutch authorship attribution demo"):
         gr.load("clips/xlm-roberta-text-genre-dutch", src="models", title="", description="**Text genre prediction**")
         gr.load("clips/robbert-2023-dutch-base-gender", src="models", title="", description="**Gender prediction**")
         

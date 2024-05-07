@@ -52,6 +52,7 @@ def main(
     os.mkdir(unique_dir_out)
     os.mkdir(os.path.join(unique_dir_out, 'visualizations'))
 
+    # check cancel flag
     if stop_que:
         stop_que = False
         return (
