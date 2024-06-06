@@ -232,4 +232,4 @@ with gr.Blocks(title="Styloscope", theme=theme, css=css) as demo:
         gr.Markdown("""<center><img src="https://thomasmore.be/sites/default/files/2022-11/UA-hor-1-nl-rgb.jpg" alt="Image" width="175"/></center>""")
 
 demo.queue(default_concurrency_limit=10)
-demo.launch(server_port=7860, share=False, server_name='0.0.0.0')
+demo.launch(server_port=7860, share=True, server_name='0.0.0.0')
