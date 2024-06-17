@@ -8,6 +8,9 @@ This repository contains the code to the CLARIAH-VL stylometry analysis pipeline
 3. Clone the respository: ```git clone https://github.com/clips/styloscope.git```
 4. In this repo's home directory, install requirements with ```pip3 install -r requirements.txt```
 
+### Google Colab
+Use Styloscope in Colab: https://colab.research.google.com/drive/1xOz6IHiUmsAfC9FeU-2Xo-cFP1GxcFjo?usp=drive_link.
+
 ### Quick start / demo
 For a demo of the pipeline, set-up and initialize the config file with ```python create_config.py``` using a HuggingFace dataset of your choice (see below), and run ```python stylo.py```.
 
