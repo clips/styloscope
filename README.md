@@ -119,3 +119,5 @@ The following table contains the formulas of the different lexical richness metr
 | Maas   | ( log(Total number of words) - log(Number of unique words) ) / log(Total number of words)**2 |
 
 
+### How to cite
+Jens Lemmens and Walter Daelemans. 2024. Styloscope and Toposcope: Towards user-friendly digital text analysis. CLiPS Technical Report Series (CTRS): 10. https://www.uantwerpen.be/en/research-groups/clips/research/computational-linguistics/compling-resources/clips-technical-repo/
