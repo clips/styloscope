@@ -5,10 +5,11 @@ kaleido==0.2.1
 spacy==3.7.4
 pyphen==0.14.0
 datasets==2.14.5
-gradio
+gradio==4.20.0
 transformers==4.38.0
 datasets==2.14.5
 torch==2.1.2
+fastapi==0.112.4
 en_core_web_lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.0/en_core_web_lg-3.7.0-py3-none-any.whl
 nl_core_news_lg @ https://github.com/explosion/spacy-models/releases/download/nl_core_news_lg-3.7.0/nl_core_news_lg-3.7.0-py3-none-any.whl
 de_core_news_lg @ https://github.com/explosion/spacy-models/releases/download/de_core_news_lg-3.7.0/de_core_news_lg-3.7.0-py3-none-any.whl
